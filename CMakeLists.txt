@@ -8,7 +8,13 @@ project(
     VERSION 0.1
     LANGUAGES CXX)
 
-add_executable(QuestForTrueColor src/main.cpp)
+
+file(GLOB QuestForTrueColor_SRC
+"src/*.h"
+"src/*.cpp"
+)
+
+add_executable(QuestForTrueColor ${QuestForTrueColor_SRC})
 
 # Include olcPixelGameEngine
 set(PIXEL_GAME_ENGINE_VERSION v2.23)
