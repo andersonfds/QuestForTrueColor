@@ -23,7 +23,7 @@ public:
     {
         this->lives = 3;
         this->speed = 0;
-        this->position = new olc::vf2d(0, 0);
+        this->position = new olc::vf2d(20, 150);
         this->width = 32;
         this->height = 32;
         this->controllable = true;
@@ -100,6 +100,7 @@ public:
 
             engine->SetPixelMode(olc::Pixel::ALPHA);
             engine->DrawSprite(this->position->x, this->position->y, this->getCurrentAnimation()->getCurrentFrame(fElapsedTime), 1, flip);
+            engine->SetPixelMode(olc::Pixel::NORMAL);
 
             // box *raycastBox = this->getRaycastBox();
             // engine->DrawRect(raycastBox->position->x, raycastBox->position->y, raycastBox->width, raycastBox->height, olc::GREEN);

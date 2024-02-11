@@ -14,18 +14,21 @@ public:
 public:
     player *m_Player;
     std::vector<box *> m_Obstacles;
+    olc::Sprite *m_Sprite;
 
     bool OnUserCreate() override
     {
         m_Player = new player();
 
         m_Obstacles.push_back(new box(new olc::vf2d(100, 100), 32, 32));
+        m_Sprite = new olc::Sprite("assets/scenes/ranch.png");
         return true;
     }
 
     bool OnUserUpdate(float fElapsedTime) override
     {
-        Clear(olc::DARK_BLUE);
+        // Background
+        DrawSprite(0, 0, m_Sprite);
 
         m_Player->Render(this, fElapsedTime);
 
