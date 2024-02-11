@@ -32,16 +32,42 @@ public:
             currentFrame++;
             if (currentFrame >= frames.size())
             {
-                currentFrame = 0;
+                if (loop)
+                {
+                    currentFrame = 0;
+                }
+                else
+                {
+                    currentFrame = frames.size() - 1;
+                    finished = true;
+                }
             }
         }
         return frames[currentFrame];
+    }
+
+    void setLoop(bool loop)
+    {
+        this->loop = loop;
+    }
+
+    bool isFinished()
+    {
+        return finished;
+    }
+
+    void reset()
+    {
+        currentFrame = 0;
+        time = 0;
+        finished = false;
     }
 
 private:
     std::vector<olc::Sprite *> frames;
     int currentFrame = 0;
     float fps, time = 0;
+    bool loop = true, finished = false;
 };
 
 #endif

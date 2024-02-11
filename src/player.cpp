@@ -36,6 +36,13 @@ public:
                                    },
                                    0.5f);
 
+        this->attack = new animation({
+                                         "assets/agnes/attack-0.png",
+                                         "assets/agnes/attack-1.png",
+                                     },
+                                     0.1f);
+        this->attack->setLoop(false);
+
         this->walk = new animation({
                                        "assets/agnes/walk-l.png",
                                        "assets/agnes/walk-l.png",
@@ -78,6 +85,11 @@ public:
                 this->speed = 32;
                 this->position->x += this->speed * fElapsedTime;
                 this->lookDirection = LookDirection::RIGHT;
+            }
+
+            if (engine->GetKey(olc::Key::SPACE).bPressed && !this->attacking)
+            {
+                this->startAttack();
             }
 
             olc::Sprite::Flip flip = olc::Sprite::Flip::NONE;
@@ -141,24 +153,42 @@ public:
 
     bool isDirectionLocked(LookDirection direction)
     {
-        return this->directionLocked != nullptr && *this->directionLocked == direction;
+        return this->directionLocked != nullptr && *this->directionLocked == direction || this->attacking;
     }
 
     bool isVerticalLocked(LookVertical vertical)
     {
-        return this->verticalLocked != nullptr && *this->verticalLocked == vertical;
+        return this->verticalLocked != nullptr && *this->verticalLocked == vertical || this->attacking;
+    }
+
+    void startAttack()
+    {
+        this->attacking = true;
     }
 
 private:
     animation *idle;
     animation *walk;
+    animation *attack;
+
     LookDirection lookDirection;
     LookVertical lookVertical;
     LookDirection *directionLocked;
     LookVertical *verticalLocked;
+    bool attacking = false;
 
     animation *getCurrentAnimation()
     {
+        if (this->attack->isFinished())
+        {
+            this->attacking = false;
+            this->attack->reset();
+        }
+
+        if (this->attacking)
+        {
+            return this->attack;
+        }
         if (this->speed == 0)
         {
             return this->idle;
