@@ -1,0 +1,6 @@
+{
+    // hide files
+    "files.exclude": {
+        "**/include": true,
+    },
+}
