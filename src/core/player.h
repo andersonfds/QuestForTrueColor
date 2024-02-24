@@ -15,7 +15,12 @@ private:
 
     bool isFacingRight = true;
     bool canJump = false;
+    bool isJumping = false;
 
+    int width = 18;
+    int height = 32;
+
+    rect<float> *collider;
     ray<float> *downRay;
     ray<float> *facingRay;
     ray<float> *upRay;
@@ -54,81 +59,83 @@ public:
 
         upRay = new ray<float>();
         upRay->direction = {0, -1};
+
+        collider = new rect<float>({0, 0}, {static_cast<float>(width), static_cast<float>(height)});
     }
 
     void OnPhysicsProcess(float fElapsedTime)
     {
-        velocity->y += 500 * fElapsedTime;
+        acceleration->y += 12.0f * fElapsedTime;
+        acceleration->x = 0;
 
-        if (GetKey(olc::Key::UP).bHeld && !IsJumping() && canJump)
-        {
-            velocity->y = -280;
-            canJump = false;
-        }
+        velocity->x = 0;
+        velocity->y += acceleration->y;
 
-        if (GetKey(olc::Key::RIGHT).bHeld)
-        {
-            velocity->x = 200;
-            isFacingRight = true;
-        }
-        else if (GetKey(olc::Key::LEFT).bHeld)
-        {
-            velocity->x = -200;
-            isFacingRight = false;
-        }
-        else
+        if (std::abs(velocity->x) < 0.1f)
         {
             velocity->x = 0;
         }
 
-        auto collisions = map->IsColliding(downRay, 16);
-        if (collisions.size() > 0 && !IsJumping())
+        if (std::abs(velocity->y) < 0.1f)
         {
-            position->y = collisions[0].y - 32;
             velocity->y = 0;
         }
 
-        canJump = velocity->y == 0;
+        auto downRayIntersections = map->IsColliding(downRay, 18);
+        canJump = downRayIntersections.size() > 0;
 
-        facingRay->origin = *position;
-        facingRay->origin.x += 16;
-        facingRay->origin.y += 30;
-        facingRay->direction.x = isFacingRight ? 1 : -1;
+        if (canJump && velocity->y > 0)
+        {
+            velocity->y = 0;
+            position->y = downRayIntersections[0].y - 32;
+            acceleration->y = 0;
+        }
 
+        if (GetEngine()->GetKey(olc::Key::UP).bHeld && canJump)
+        {
+            velocity->y = -200;
+            canJump = false;
+            isJumping = true;
+        }
+
+        auto facingRayIntersections = map->IsColliding(facingRay, width / 2);
+        bool isFacingWall = facingRayIntersections.size() > 0;
+
+        if (GetEngine()->GetKey(olc::Key::LEFT).bHeld)
+        {
+            if (!isFacingWall)
+            {
+                velocity->x = -100;
+            }
+            isFacingRight = false;
+        }
+        else if (GetEngine()->GetKey(olc::Key::RIGHT).bHeld)
+        {
+            if (!isFacingWall)
+            {
+                velocity->x = 100;
+            }
+            isFacingRight = true;
+        }
+
+        *position += *velocity * fElapsedTime;
         downRay->origin = *position;
         downRay->origin.x += 16;
-        downRay->origin.y += 32;
-
-        upRay->origin = *position;
-        upRay->origin.x += 16;
-        upRay->origin.y += 0;
-
-        auto faceColliders = map->IsColliding(facingRay, 16);
-        if (faceColliders.size() > 0)
-        {
-            position->x = faceColliders[0].x - (isFacingRight ? 32 : 0);
-            velocity->x = 0;
-        }
-
-        *velocity += *acceleration * fElapsedTime;
-        *position += *velocity * fElapsedTime;
-
-        Camera *camera = GetCamera();
-
-        if (position->x > camera->size->x)
-        {
-            this->position->x = camera->size->x;
-        }
-
-        if (position->y > camera->size->y)
-        {
-            this->position->y = camera->size->y;
-        }
+        downRay->origin.y += 16;
+        facingRay->origin = *position;
+        facingRay->origin.x += 16;
+        facingRay->origin.y += 16;
+        facingRay->direction = isFacingRight ? olc::vf2d(1, 0) : olc::vf2d(-1, 0);
     }
 
     bool IsFacingRight()
     {
         return isFacingRight;
+    }
+
+    bool IsOnGround()
+    {
+        return velocity->y >= 0;
     }
 
     bool IsMoving()
@@ -168,18 +175,37 @@ public:
 
         if (IsDebug())
         {
-            olc::vf2d downOrigin = downRay->origin;
-            camera->WorldToScreen(downOrigin);
+            int offsetX = (32 - this->width) / 2;
+            int offsetY = (32 - this->height) / 2;
 
-            olc::vf2d facingOrigin = facingRay->origin;
-            camera->WorldToScreen(facingOrigin);
+            olc::vf2d pos = *this->position;
+            pos.x += offsetX;
+            pos.y += offsetY;
 
-            olc::vf2d upOrigin = upRay->origin;
-            camera->WorldToScreen(upOrigin);
+            camera->WorldToScreen(pos);
+            GetEngine()->DrawRectDecal(pos, {static_cast<float>(this->width), static_cast<float>(this->height)}, olc::RED);
 
-            GetEngine()->DrawLineDecal(downOrigin, downOrigin + downRay->direction * 32, olc::WHITE);
-            GetEngine()->DrawLineDecal(facingOrigin, facingOrigin + facingRay->direction * 32, olc::WHITE);
-            GetEngine()->DrawLineDecal(upOrigin, upOrigin + upRay->direction * 32, olc::WHITE);
+            // draw facing ray
+            olc::vf2d facingRayOrigin = facingRay->origin;
+            olc::vf2d facingRayDirection = facingRay->direction;
+
+            camera->WorldToScreen(facingRayOrigin);
+
+            facingRayDirection *= 32;
+            facingRayDirection += facingRayOrigin;
+
+            GetEngine()->DrawLineDecal(facingRayOrigin, facingRayDirection, olc::YELLOW);
+
+            // draw down ray
+            olc::vf2d downRayOrigin = downRay->origin;
+            olc::vf2d downRayDirection = downRay->direction;
+
+            camera->WorldToScreen(downRayOrigin);
+
+            downRayDirection *= 5;
+            downRayDirection += downRayOrigin;
+
+            GetEngine()->DrawLineDecal(downRayOrigin, downRayDirection, olc::YELLOW);
         }
     }
 

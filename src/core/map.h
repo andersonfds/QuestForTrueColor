@@ -106,6 +106,26 @@ public:
         return std::vector<olc::vf2d>();
     }
 
+    std::vector<olc::vf2d> IsColliding(rect<float> *rect)
+    {
+        std::vector<olc::vf2d> intersections;
+
+        for (auto &box : colliders)
+        {
+            if (IsOffScreen(box.pos))
+                continue;
+
+            std::vector<olc::vf2d> intersection = intersects(*rect, box);
+
+            if (intersection.size() > 0)
+            {
+                intersections.push_back(intersection[0]);
+            }
+        }
+
+        return intersections;
+    }
+
     void OnProcess(float fElapsedTime) override
     {
         Camera *camera = GetCamera();
