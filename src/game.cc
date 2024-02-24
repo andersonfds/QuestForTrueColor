@@ -17,62 +17,59 @@
 class QuestForTrueColor : public olc::PixelGameEngine
 {
 private:
-    std::vector<Layer *> layers;
     float fDeltaTime = 0.0f;
+    Layer *mapLayer;
+    Player *player;
 
 public:
     QuestForTrueColor()
     {
-        sAppName = "Quest for True Color";
-        layers = std::vector<Layer *>();
     }
 
     bool OnUserCreate() override
     {
-        // Adding all layers
-        Layer *mapLayer = new Layer("Map", this);
+        mapLayer = new Layer("Map", this);
         Map *map = new Map();
-
         mapLayer->AddNode(map);
-        mapLayer->AddNode(new Player(map));
+        player = new Player(map);
+        mapLayer->AddNode(player);
 
-        layers.push_back(mapLayer);
-
-        // Running onCreate for all layers
-        for (auto layer : layers)
-        {
-            layer->OnCreate();
-        }
-
+        mapLayer->OnCreate();
         return true;
     }
 
     bool OnUserUpdate(float fElapsedTime) override
     {
         fDeltaTime += fElapsedTime;
+        Camera *camera = mapLayer->GetCamera();
+
+        if (GetKey(olc::Key::ESCAPE).bPressed)
+        {
+            OnUserCreate();
+            return true;
+        }
 
         if (GetKey(olc::Key::TAB).bPressed)
         {
             DEBUG = !DEBUG;
         }
 
-        // Only process physics at a fixed rate
-        // this prevents the game from running faster on faster hardware
+        float fPlayerPosX = player->GetPosition()->x;
+        float fPlayerPosY = player->GetPosition()->y;
+        float halfScreenWidth = ScreenWidth() / 2;
+        float halfScreenHeight = ScreenHeight() / 2;
+
+        olc::vf2d playerPos = {fPlayerPosX - halfScreenWidth, fPlayerPosY - halfScreenHeight};
+        mapLayer->SetCameraPosition(playerPos);
+
         if (fDeltaTime >= 1.0f / TARGET_PHYSICS_PROCESS)
         {
-
-            for (auto layer : layers)
-            {
-                layer->PhysicsProcess(fDeltaTime);
-            }
-            fDeltaTime = 0.0f;
+            mapLayer->PhysicsProcess(fDeltaTime);
+            fDeltaTime -= 1.0f / TARGET_PHYSICS_PROCESS;
         }
 
-        // Process all layers
-        for (auto layer : layers)
-        {
-            layer->Process(fElapsedTime);
-        }
+        mapLayer->Process(fElapsedTime);
+
         return true;
     }
 };

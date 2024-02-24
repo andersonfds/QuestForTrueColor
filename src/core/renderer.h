@@ -1,9 +1,36 @@
 #pragma once
 
+struct Camera
+{
+    olc::vf2d *size;
+    olc::vf2d *position;
+    float zoom;
+
+    Camera()
+    {
+        position = new olc::vf2d();
+        size = new olc::vf2d();
+        zoom = 1.000f;
+    }
+
+    void ScreenToWorld(olc::vf2d &screen)
+    {
+        screen.x = screen.x / zoom + position->x;
+        screen.y = screen.y / zoom + position->y;
+    }
+
+    void WorldToScreen(olc::vf2d &world)
+    {
+        world.x = (world.x - position->x) * zoom;
+        world.y = (world.y - position->y) * zoom;
+    }
+};
+
 class Node
 {
 private:
     olc::PixelGameEngine *pge;
+    Camera *camera;
 
 protected:
     /**
@@ -30,6 +57,11 @@ protected:
     bool IsDebug()
     {
         return DEBUG;
+    }
+
+    Camera *GetCamera()
+    {
+        return camera;
     }
 
 public:
@@ -62,6 +94,11 @@ public:
     {
         this->pge = pge;
     }
+
+    void SetCamera(Camera *camera)
+    {
+        this->camera = camera;
+    }
 };
 
 class Layer
@@ -71,6 +108,7 @@ public:
     {
         this->name = name;
         this->pge = pge;
+        this->camera = new Camera();
     }
 
     std::string name;
@@ -86,6 +124,7 @@ public:
     void AddNode(Node *node)
     {
         node->SetEngine(pge);
+        node->SetCamera(camera);
         nodes.push_back(node);
     }
 
@@ -115,7 +154,27 @@ public:
         return pge;
     }
 
+    void SetCameraPosition(olc::vf2d position)
+    {
+        auto screenWidth = pge->ScreenWidth();
+        auto screenHeight = pge->ScreenHeight();
+
+        camera->position->x = std::max(0.0f, std::min(position.x, camera->size->x - screenWidth));
+        camera->position->y = std::max(0.0f, std::min(position.y, camera->size->y - screenHeight));
+    }
+
+    olc::vf2d GetCameraPosition()
+    {
+        return *camera->position;
+    }
+
+    Camera *GetCamera()
+    {
+        return camera;
+    }
+
 private:
     std::vector<Node *> nodes;
     olc::PixelGameEngine *pge;
+    Camera *camera;
 };

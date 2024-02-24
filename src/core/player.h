@@ -42,7 +42,7 @@ public:
                                        "assets/player/walk_R.png",
                                    });
 
-        position = new olc::vf2d(10, 10);
+        position = new olc::vf2d(0, 0);
         velocity = new olc::vf2d(0, 0);
         acceleration = new olc::vf2d(0, 0);
 
@@ -88,12 +88,6 @@ public:
             velocity->y = 0;
         }
 
-        if (position->y > GetEngine()->ScreenHeight() - 32)
-        {
-            position->y = GetEngine()->ScreenHeight() - 32;
-            velocity->y = 0;
-        }
-
         canJump = velocity->y == 0;
 
         facingRay->origin = *position;
@@ -118,6 +112,11 @@ public:
 
         *velocity += *acceleration * fElapsedTime;
         *position += *velocity * fElapsedTime;
+
+        if (position->x < 0)
+        {
+            position->x = 0;
+        }
     }
 
     bool IsFacingRight()
@@ -149,6 +148,7 @@ public:
     {
         olc::vf2d scale = {1.0f, 1.0f};
         olc::vf2d position = *this->position;
+        Camera *camera = GetCamera();
 
         if (!isFacingRight)
         {
@@ -156,13 +156,28 @@ public:
             position.x += 32;
         }
 
+        camera->WorldToScreen(position);
         GetEngine()->DrawDecal(position, GetAnimation(fElapsedTime), scale);
 
         if (IsDebug())
         {
-            GetEngine()->DrawLineDecal(downRay->origin, downRay->origin + downRay->direction * 32, olc::WHITE);
-            GetEngine()->DrawLineDecal(facingRay->origin, facingRay->origin + facingRay->direction * 32, olc::WHITE);
-            GetEngine()->DrawLineDecal(upRay->origin, upRay->origin + upRay->direction * 32, olc::WHITE);
+            olc::vf2d downOrigin = downRay->origin;
+            camera->WorldToScreen(downOrigin);
+
+            olc::vf2d facingOrigin = facingRay->origin;
+            camera->WorldToScreen(facingOrigin);
+
+            olc::vf2d upOrigin = upRay->origin;
+            camera->WorldToScreen(upOrigin);
+
+            GetEngine()->DrawLineDecal(downOrigin, downOrigin + downRay->direction * 32, olc::WHITE);
+            GetEngine()->DrawLineDecal(facingOrigin, facingOrigin + facingRay->direction * 32, olc::WHITE);
+            GetEngine()->DrawLineDecal(upOrigin, upOrigin + upRay->direction * 32, olc::WHITE);
         }
+    }
+
+    olc::vf2d *GetPosition()
+    {
+        return this->position;
     }
 };
