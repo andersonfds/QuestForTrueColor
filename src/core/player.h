@@ -113,9 +113,16 @@ public:
         *velocity += *acceleration * fElapsedTime;
         *position += *velocity * fElapsedTime;
 
-        if (position->x < 0)
+        Camera *camera = GetCamera();
+
+        if (position->x > camera->size->x)
         {
-            position->x = 0;
+            this->position->x = camera->size->x;
+        }
+
+        if (position->y > camera->size->y)
+        {
+            this->position->y = camera->size->y;
         }
     }
 
