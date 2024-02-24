@@ -62,7 +62,7 @@ public:
 
         if (GetKey(olc::Key::UP).bHeld && !IsJumping() && canJump)
         {
-            velocity->y = -200;
+            velocity->y = -280;
             canJump = false;
         }
 
