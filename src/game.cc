@@ -12,14 +12,13 @@
 #include "core/map.h"
 #include "core/animation.h"
 #include "core/player.h"
-#include "core/scene.h"
+#include "core/menu.h"
 
 class QuestForTrueColor : public olc::PixelGameEngine
 {
 private:
     float fDeltaTime = 0.0f;
     Layer *mapLayer;
-    Player *player;
 
 public:
     QuestForTrueColor()
@@ -29,19 +28,20 @@ public:
     bool OnUserCreate() override
     {
         mapLayer = new Layer("Map", this);
-        Map *map = new Map();
-        mapLayer->AddNode(map);
-        player = new Player(map);
-        mapLayer->AddNode(player);
-
-        mapLayer->OnCreate();
+        CreateMenu();
         return true;
+    }
+
+    void CreateMenu()
+    {
+        MainMenu *menu = new MainMenu(mapLayer);
+        mapLayer->AddNode(menu);
+        mapLayer->OnCreate();
     }
 
     bool OnUserUpdate(float fElapsedTime) override
     {
         fDeltaTime += fElapsedTime;
-        Camera *camera = mapLayer->GetCamera();
 
         if (GetKey(olc::Key::ESCAPE).bPressed)
         {
@@ -53,14 +53,6 @@ public:
         {
             DEBUG = !DEBUG;
         }
-
-        float fPlayerPosX = player->GetPosition()->x;
-        float fPlayerPosY = player->GetPosition()->y;
-        float halfScreenWidth = ScreenWidth() / 2;
-        float halfScreenHeight = ScreenHeight() / 2;
-
-        olc::vf2d playerPos = {fPlayerPosX - halfScreenWidth, fPlayerPosY - halfScreenHeight};
-        mapLayer->SetCameraPosition(playerPos);
 
         if (fDeltaTime >= 1.0f / TARGET_PHYSICS_PROCESS)
         {

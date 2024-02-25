@@ -50,6 +50,10 @@ public:
         position = new olc::vf2d(0, 0);
         velocity = new olc::vf2d(0, 0);
         acceleration = new olc::vf2d(0, 0);
+        GetCamera()->position = position;
+        olc::vf2d offset = {GetEngine()->ScreenWidth() / 2.0f, GetEngine()->ScreenHeight() / 2.0f};
+        GetCamera()->offset->x = offset.x;
+        GetCamera()->offset->y = offset.y;
 
         downRay = new ray<float>();
         downRay->direction = {0, 1};

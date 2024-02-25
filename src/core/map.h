@@ -54,17 +54,7 @@ private:
     bool IsOffScreen(olc::vf2d pos)
     {
         Camera *camera = GetCamera();
-
-        rect<float> cameraRect = rect<float>({*camera->position, *camera->size});
-        rect<float> objectRect = rect<float>(pos, {16, 16});
-
-        // add some padding to the camera
-        cameraRect.pos.x -= 100;
-        cameraRect.pos.y -= 100;
-        cameraRect.size.x += 100;
-        cameraRect.size.y += 100;
-
-        return !overlaps(cameraRect, objectRect);
+        return !camera->IsOnScreen(pos);
     }
 
 public:
