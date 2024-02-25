@@ -31,8 +31,8 @@ private:
         GetCamera()->size->x = level.size.x;
         GetCamera()->size->y = level.size.y;
 
+        /// Load colliders
         auto &collidersLayer = level.getLayer("colliders");
-
         for (int x = 0; x < collidersLayer.getGridSize().x; x++)
         {
             for (int y = 0; y < collidersLayer.getGridSize().y; y++)
@@ -121,45 +121,45 @@ public:
         Camera *camera = GetCamera();
         const auto &level = getLevel();
 
+        /// Draws the background color
         GetEngine()->FillRectDecal({0, 0}, {static_cast<float>(GetEngine()->ScreenWidth()), static_cast<float>(GetEngine()->ScreenHeight())}, bgColor);
 
-        for (auto &layer : level.allLayers())
+        /// Draws the platformer layer
+        auto &platformer = level.getLayer("platform");
+        auto &tileset = platformer.getTileset();
+        for (auto &tile : platformer.allTiles())
         {
-            const ldtk::Tileset &tileset = layer.getTileset();
+            auto rect = tile.getTextureRect();
+            auto worldPos = tile.getWorldPosition();
 
-            for (auto &tile : layer.allTiles())
+            olc::vf2d pos = {static_cast<float>(worldPos.x), static_cast<float>(worldPos.y)};
+            olc::vf2d tileSize = {static_cast<float>(rect.width), static_cast<float>(rect.height)};
+
+            if (IsOffScreen(pos))
+                continue;
+
+            bool flipX = tile.flipX;
+            bool flipY = tile.flipY;
+
+            olc::vf2d scale = {flipX ? -1.0f : 1.0f, flipY ? -1.0f : 1.0f};
+
+            if (flipX)
             {
-                auto rect = tile.getTextureRect();
-                auto worldPos = tile.getWorldPosition();
-
-                olc::vf2d pos = {static_cast<float>(worldPos.x), static_cast<float>(worldPos.y)};
-                olc::vf2d tileSize = {static_cast<float>(rect.width), static_cast<float>(rect.height)};
-
-                if (IsOffScreen(pos))
-                    continue;
-
-                bool flipX = tile.flipX;
-                bool flipY = tile.flipY;
-
-                olc::vf2d scale = {flipX ? -1.0f : 1.0f, flipY ? -1.0f : 1.0f};
-
-                if (flipX)
-                {
-                    pos.x += tileSize.x;
-                }
-
-                if (flipY)
-                {
-                    pos.y += tileSize.y;
-                }
-
-                auto tilesetId = tileset.uid;
-                olc::Decal *decal = tilesets[tilesetId].get();
-                camera->WorldToScreen(pos);
-                GetEngine()->DrawPartialDecal(pos, decal, {static_cast<float>(rect.x), static_cast<float>(rect.y)}, tileSize, scale);
+                pos.x += tileSize.x;
             }
+
+            if (flipY)
+            {
+                pos.y += tileSize.y;
+            }
+
+            auto tilesetId = tileset.uid;
+            olc::Decal *decal = tilesets[tilesetId].get();
+            camera->WorldToScreen(pos);
+            GetEngine()->DrawPartialDecal(pos, decal, {static_cast<float>(rect.x), static_cast<float>(rect.y)}, tileSize, scale);
         }
 
+        // Draw colliders if debug mode is enabled
         if (DEBUG)
             for (auto &collider : colliders)
             {
@@ -170,5 +170,17 @@ public:
                 camera->WorldToScreen(pos);
                 GetEngine()->DrawRectDecal(pos, collider.size, olc::WHITE);
             }
+    }
+
+    ldtk::Entity *GetEntity(std::string entityName)
+    {
+        auto &level = getLevel();
+        auto &entitiesLayer = level.getLayer("entities");
+        auto &entities = entitiesLayer.getEntitiesByName(entityName);
+        if (entities.size() > 0)
+        {
+            return &entities[0].get();
+        }
+        return nullptr;
     }
 };

@@ -7,7 +7,6 @@ class Player : public Node
 private:
     Animation *idle;
     Animation *walk;
-    Map *map;
 
     olc::vf2d *position;
     olc::vf2d *velocity;
@@ -26,10 +25,6 @@ private:
     ray<float> *upRay;
 
 public:
-    Player(Map *map) : Node(), map(map)
-    {
-    }
-
     void OnCreate()
     {
         idle = new Animation(1.0f, {
@@ -47,11 +42,15 @@ public:
                                        "assets/player/walk_R.png",
                                    });
 
-        position = new olc::vf2d(0, 0);
+        Map *map = GetLayer()->GetNode<Map>();
+        auto playerEntity = map->GetEntity("player");
+        auto initialPosition = playerEntity->getPosition();
+
+        position = new olc::vf2d({static_cast<float>(initialPosition.x), static_cast<float>(initialPosition.y)});
         velocity = new olc::vf2d(0, 0);
         acceleration = new olc::vf2d(0, 0);
         GetCamera()->position = position;
-        olc::vf2d offset = {GetEngine()->ScreenWidth() / 2.0f, GetEngine()->ScreenHeight() / 2.0f};
+        olc::vf2d offset = {GetEngine()->ScreenWidth() / 2.0f, GetEngine()->ScreenHeight() / 3.0f * 2 - 20};
         GetCamera()->offset->x = offset.x;
         GetCamera()->offset->y = offset.y;
 
@@ -74,6 +73,7 @@ public:
 
         velocity->x = 0;
         velocity->y += acceleration->y;
+        Map *map = GetLayer()->GetNode<Map>();
 
         if (std::abs(velocity->x) < 0.1f)
         {

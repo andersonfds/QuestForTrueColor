@@ -18,7 +18,7 @@ class QuestForTrueColor : public olc::PixelGameEngine
 {
 private:
     float fDeltaTime = 0.0f;
-    Layer *mapLayer;
+    Layer *gameLayer;
 
 public:
     QuestForTrueColor()
@@ -27,16 +27,16 @@ public:
 
     bool OnUserCreate() override
     {
-        mapLayer = new Layer("Map", this);
+        gameLayer = new Layer("Game", this);
         CreateMenu();
         return true;
     }
 
     void CreateMenu()
     {
-        MainMenu *menu = new MainMenu(mapLayer);
-        mapLayer->AddNode(menu);
-        mapLayer->OnCreate();
+        MainMenu *menu = new MainMenu(gameLayer);
+        gameLayer->AddNode(menu);
+        gameLayer->OnCreate();
     }
 
     bool OnUserUpdate(float fElapsedTime) override
@@ -56,11 +56,11 @@ public:
 
         if (fDeltaTime >= 1.0f / TARGET_PHYSICS_PROCESS)
         {
-            mapLayer->PhysicsProcess(fDeltaTime);
+            gameLayer->PhysicsProcess(fDeltaTime);
             fDeltaTime -= 1.0f / TARGET_PHYSICS_PROCESS;
         }
 
-        mapLayer->Process(fElapsedTime);
+        gameLayer->Process(fElapsedTime);
 
         return true;
     }

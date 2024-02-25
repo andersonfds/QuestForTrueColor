@@ -35,7 +35,7 @@ public:
         {
             Map *map = new Map();
             gameLayer->AddNode(map);
-            Player *player = new Player(map);
+            Player *player = new Player();
             gameLayer->AddNode(player);
             gameLayer->OnCreate();
             gameLayer->RemoveNode(this);

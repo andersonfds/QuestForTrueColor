@@ -1,6 +1,8 @@
 #pragma once
 
-using namespace olc::utils::geom2d;
+class Layer;
+
+using namespace olc::utils;
 
 struct Camera
 {
@@ -41,8 +43,8 @@ struct Camera
     bool IsOnScreen(olc::vf2d pos)
     {
         auto position = GetPosition();
-        rect<float> cameraRect = rect<float>({position, *size});
-        rect<float> objectRect = rect<float>(pos, {16, 16});
+        geom2d::rect<float> cameraRect = geom2d::rect<float>({position, *size});
+        geom2d::rect<float> objectRect = geom2d::rect<float>(pos, {16, 16});
 
         // add some padding to the camera
         cameraRect.pos.x -= 100;
@@ -81,6 +83,7 @@ class Node
 private:
     olc::PixelGameEngine *pge;
     Camera *camera;
+    Layer *layer;
 
 protected:
     /**
@@ -112,6 +115,11 @@ protected:
     Camera *GetCamera()
     {
         return camera;
+    }
+
+    Layer *GetLayer()
+    {
+        return layer;
     }
 
 public:
@@ -149,6 +157,11 @@ public:
     {
         this->camera = camera;
     }
+
+    void SetLayer(Layer *layer)
+    {
+        this->layer = layer;
+    }
 };
 
 class Layer
@@ -175,6 +188,7 @@ public:
     {
         node->SetEngine(pge);
         node->SetCamera(camera);
+        node->SetLayer(this);
         nodes.push_back(node);
     }
 
@@ -221,6 +235,21 @@ public:
     Camera *GetCamera()
     {
         return camera;
+    }
+
+    template <typename T>
+    T *GetNode()
+    {
+        for (auto node : nodes)
+        {
+            T *t = dynamic_cast<T *>(node);
+            if (t)
+            {
+                return t;
+            }
+        }
+
+        return nullptr;
     }
 
 private:
