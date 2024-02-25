@@ -4,3 +4,5 @@
 /CMakeCache.txt
 /build
 .DS_Store
+.cache
+.vscode/settings.json
