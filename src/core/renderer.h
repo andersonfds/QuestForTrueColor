@@ -84,6 +84,7 @@ private:
     olc::PixelGameEngine *pge;
     Camera *camera;
     Layer *layer;
+    ldtk::IID entityID;
 
 protected:
     /**
@@ -120,6 +121,11 @@ protected:
     Layer *GetLayer()
     {
         return layer;
+    }
+
+    ldtk::IID GetEntityID()
+    {
+        return entityID;
     }
 
 public:
@@ -161,6 +167,11 @@ public:
     void SetLayer(Layer *layer)
     {
         this->layer = layer;
+    }
+
+    void SetEntityID(ldtk::IID entityID)
+    {
+        this->entityID = entityID;
     }
 };
 

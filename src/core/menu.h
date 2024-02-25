@@ -1,3 +1,7 @@
+class QuestForTrueColor;
+
+Node *CreateEntity(const ldtk::Entity &entity);
+
 enum GameOption
 {
     PLAYGROUND,
@@ -35,9 +39,8 @@ public:
         {
             Map *map = new Map();
             gameLayer->AddNode(map);
-            Player *player = new Player();
-            gameLayer->AddNode(player);
             gameLayer->OnCreate();
+            SetLevel("level_1");
             gameLayer->RemoveNode(this);
             break;
         }
@@ -46,6 +49,25 @@ public:
             break;
         case GameOption::CREDITS:
             break;
+        }
+    }
+
+    void SetLevel(std::string level)
+    {
+        Map *map = gameLayer->GetNode<Map>();
+        map->SetActiveLevel(level);
+        auto &entities = map->GetAllEntities();
+
+        for (auto &entity : entities)
+        {
+            Node *node = CreateEntity(entity);
+
+            if (node == nullptr)
+                continue;
+
+            node->SetEntityID(entity.iid);
+            gameLayer->AddNode(node);
+            node->OnCreate();
         }
     }
 

@@ -13,6 +13,20 @@
 #include "core/animation.h"
 #include "core/player.h"
 #include "core/menu.h"
+#include "core/coin.h"
+
+Node *CreateEntity(const ldtk::Entity &entity)
+{
+    std::string name = entity.getName();
+
+    if (name == "player")
+        return new Player();
+
+    if (name == "coin")
+        return new Coin();
+
+    return nullptr;
+}
 
 class QuestForTrueColor : public olc::PixelGameEngine
 {

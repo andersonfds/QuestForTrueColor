@@ -14,6 +14,7 @@ private:
     std::map<int, std::unique_ptr<olc::Decal>> tilesets;
     std::vector<rect<float>> colliders;
     float distance = 0.0;
+    std::vector<Node *> entities;
 
     const ldtk::Level &getLevel()
     {
@@ -21,7 +22,14 @@ private:
         return world.getLevel(levelName);
     }
 
-    void setActiveLevel(std::string levelName)
+    bool IsOffScreen(olc::vf2d pos)
+    {
+        Camera *camera = GetCamera();
+        return !camera->IsOnScreen(pos);
+    }
+
+public:
+    void SetActiveLevel(std::string levelName)
     {
         this->levelName = levelName;
         auto &level = getLevel();
@@ -49,20 +57,19 @@ private:
                 }
             }
         }
+
+        // Remove all entities
+        for (auto &entity : entities)
+        {
+            GetLayer()->RemoveNode(entity);
+        }
+        entities.clear();
     }
 
-    bool IsOffScreen(olc::vf2d pos)
-    {
-        Camera *camera = GetCamera();
-        return !camera->IsOnScreen(pos);
-    }
-
-public:
     void OnCreate() override
     {
         std::string basePath = "assets/map_project/";
         ldtk_project.loadFromFile(basePath + "QuestForTrueColor.ldtk");
-        setActiveLevel("level_1");
 
         auto &world = ldtk_project.getWorld();
 
@@ -124,11 +131,34 @@ public:
         /// Draws the background color
         GetEngine()->FillRectDecal({0, 0}, {static_cast<float>(GetEngine()->ScreenWidth()), static_cast<float>(GetEngine()->ScreenHeight())}, bgColor);
 
+        /// Draws background layer
+        DrawLayer("background");
+
         /// Draws the platformer layer
-        auto &platformer = level.getLayer("platform");
-        auto &tileset = platformer.getTileset();
-        for (auto &tile : platformer.allTiles())
+        DrawLayer("platform");
+
+        // Draw colliders if debug mode is enabled
+        if (DEBUG)
+            for (auto &collider : colliders)
+            {
+                if (IsOffScreen(collider.pos))
+                    continue;
+
+                olc::vf2d pos = olc::vf2d(collider.pos);
+                camera->WorldToScreen(pos);
+                GetEngine()->DrawRectDecal(pos, collider.size, olc::WHITE);
+            }
+    }
+
+    void DrawLayer(std::string name)
+    {
+        const auto &level = getLevel();
+        auto &layer = level.getLayer(name);
+        auto &tileset = layer.getTileset();
+        for (auto &tile : layer.allTiles())
         {
+            const auto &level = getLevel();
+
             auto rect = tile.getTextureRect();
             auto worldPos = tile.getWorldPosition();
 
@@ -153,34 +183,46 @@ public:
                 pos.y += tileSize.y;
             }
 
-            auto tilesetId = tileset.uid;
-            olc::Decal *decal = tilesets[tilesetId].get();
-            camera->WorldToScreen(pos);
-            GetEngine()->DrawPartialDecal(pos, decal, {static_cast<float>(rect.x), static_cast<float>(rect.y)}, tileSize, scale);
+            olc::vf2d tileMap = {static_cast<float>(rect.x), static_cast<float>(rect.y)};
+            DrawTile(pos, tileset.uid, tileMap, tileSize, scale);
         }
-
-        // Draw colliders if debug mode is enabled
-        if (DEBUG)
-            for (auto &collider : colliders)
-            {
-                if (IsOffScreen(collider.pos))
-                    continue;
-
-                olc::vf2d pos = olc::vf2d(collider.pos);
-                camera->WorldToScreen(pos);
-                GetEngine()->DrawRectDecal(pos, collider.size, olc::WHITE);
-            }
     }
 
-    ldtk::Entity *GetEntity(std::string entityName)
+    void DrawTile(olc::vf2d pos, int tilesetID, olc::vf2d tileMap, olc::vf2d tileSize, olc::vf2d scale)
+    {
+        Camera *camera = GetCamera();
+        olc::Decal *decal = tilesets[tilesetID].get();
+        camera->WorldToScreen(pos);
+        GetEngine()->DrawPartialDecal(pos, decal, tileMap, tileSize, scale);
+    }
+
+    const ldtk::Entity &GetEntity(ldtk::IID entityID)
     {
         auto &level = getLevel();
         auto &entitiesLayer = level.getLayer("entities");
-        auto &entities = entitiesLayer.getEntitiesByName(entityName);
-        if (entities.size() > 0)
+        return entitiesLayer.getEntity(entityID);
+    }
+
+    const std::vector<ldtk::Entity> &GetAllEntities()
+    {
+        auto &level = getLevel();
+        auto &entitiesLayer = level.getLayer("entities");
+        return entitiesLayer.allEntities();
+    }
+
+    int GetTilesetIDByPath(std::string path)
+    {
+        auto &world = ldtk_project.getWorld();
+        auto &tilesets = world.allTilesets();
+
+        for (auto &tileset : tilesets)
         {
-            return &entities[0].get();
+            if (tileset.path == path)
+            {
+                return tileset.uid;
+            }
         }
-        return nullptr;
+
+        return -1;
     }
 };

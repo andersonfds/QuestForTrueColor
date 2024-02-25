@@ -19,6 +19,8 @@ private:
     int width = 18;
     int height = 32;
 
+    int money = 0;
+
     rect<float> *collider;
     ray<float> *downRay;
     ray<float> *facingRay;
@@ -43,8 +45,8 @@ public:
                                    });
 
         Map *map = GetLayer()->GetNode<Map>();
-        auto playerEntity = map->GetEntity("player");
-        auto initialPosition = playerEntity->getPosition();
+        const auto &playerEntity = map->GetEntity(this->GetEntityID());
+        auto initialPosition = playerEntity.getPosition();
 
         position = new olc::vf2d({static_cast<float>(initialPosition.x), static_cast<float>(initialPosition.y)});
         velocity = new olc::vf2d(0, 0);
@@ -130,6 +132,7 @@ public:
         facingRay->origin.x += 16;
         facingRay->origin.y += 16;
         facingRay->direction = isFacingRight ? olc::vf2d(1, 0) : olc::vf2d(-1, 0);
+        collider->pos = *position;
     }
 
     bool IsFacingRight()
@@ -211,6 +214,16 @@ public:
 
             GetEngine()->DrawLineDecal(downRayOrigin, downRayDirection, olc::YELLOW);
         }
+    }
+
+    rect<float> *GetCollider()
+    {
+        return collider;
+    }
+
+    void AddMoney(int amount)
+    {
+        money += amount;
     }
 
     olc::vf2d *GetPosition()
