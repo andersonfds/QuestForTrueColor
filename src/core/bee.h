@@ -11,6 +11,7 @@ private:
     float speed = 100.0f;
     float delta = 0.0f;
     int direction = 1;
+    float timeOffscreen = 0.0f;
 
 public:
     void OnCreate() override
@@ -45,6 +46,20 @@ public:
     {
         Camera *camera = GetLayer()->GetCamera();
 
+        if (!camera->IsOnScreen(*position))
+        {
+            if (timeOffscreen > 30.0f)
+            {
+                return;
+            }
+
+            timeOffscreen += fElapsedTime;
+        }
+        else
+        {
+            timeOffscreen = 0.0f;
+        }
+
         if (travelTo != nullptr)
         {
             delta += fElapsedTime;
@@ -61,11 +76,6 @@ public:
                 direction = 1;
             }
             position->y = initialPosition->y + travelTo->y * 32 + sin(delta * 2) * 10;
-        }
-
-        if (!camera->IsOnScreen(*position))
-        {
-            return;
         }
 
         Map *map = GetLayer()->GetNode<Map>();
