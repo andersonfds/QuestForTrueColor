@@ -11,7 +11,7 @@
 	"iid": "51ab0f20-b0a0-11ee-a904-ad57c7e75c94",
 	"jsonVersion": "1.5.3",
 	"appBuildId": 473703,
-	"nextUid": 68,
+	"nextUid": 69,
 	"identifierStyle": "Lowercase",
 	"toc": [],
 	"worldLayout": "Free",
@@ -1035,7 +1035,7 @@
 			"fieldDefs": [
 				{
 					"identifier": "is_mad",
-					"doc": null,
+					"doc": "This tells whether the bee is in attack mode or just chilling",
 					"__type": "Bool",
 					"uid": 65,
 					"type": "F_Bool",
@@ -1044,6 +1044,43 @@
 					"arrayMinLength": null,
 					"arrayMaxLength": null,
 					"editorDisplayMode": "Hidden",
+					"editorDisplayScale": 1,
+					"editorDisplayPos": "Above",
+					"editorLinkStyle": "StraightArrow",
+					"editorDisplayColor": null,
+					"editorAlwaysShow": false,
+					"editorShowInWorld": true,
+					"editorCutLongValues": true,
+					"editorTextSuffix": null,
+					"editorTextPrefix": null,
+					"useForSmartColor": false,
+					"exportToToc": false,
+					"searchable": false,
+					"min": null,
+					"max": null,
+					"regex": null,
+					"acceptFileTypes": null,
+					"defaultOverride": null,
+					"textLanguageMode": null,
+					"symmetricalRef": false,
+					"autoChainRef": true,
+					"allowOutOfLevelRef": true,
+					"allowedRefs": "OnlySame",
+					"allowedRefsEntityUid": null,
+					"allowedRefTags": [],
+					"tilesetUid": null
+				},
+				{
+					"identifier": "travel",
+					"doc": "This tells how many sprite blocks the bee should travel",
+					"__type": "Point",
+					"uid": 68,
+					"type": "F_Point",
+					"isArray": false,
+					"canBeNull": false,
+					"arrayMinLength": null,
+					"arrayMaxLength": null,
+					"editorDisplayMode": "PointPath",
 					"editorDisplayScale": 1,
 					"editorDisplayPos": "Above",
 					"editorLinkStyle": "StraightArrow",
@@ -1368,10 +1405,16 @@
 							"height": 32,
 							"defUid": 64,
 							"px": [320,32],
-							"fieldInstances": [{ "__identifier": "is_mad", "__type": "Bool", "__value": true, "__tile": null, "defUid": 65, "realEditorValues": [{
-								"id": "V_Bool",
-								"params": [ true ]
-							}] }],
+							"fieldInstances": [
+								{ "__identifier": "is_mad", "__type": "Bool", "__value": true, "__tile": null, "defUid": 65, "realEditorValues": [{
+									"id": "V_Bool",
+									"params": [ true ]
+								}] },
+								{ "__identifier": "travel", "__type": "Point", "__value": { "cx": 13, "cy": 1 }, "__tile": null, "defUid": 68, "realEditorValues": [{
+									"id": "V_String",
+									"params": ["13,1"]
+								}] }
+							],
 							"__worldX": 320,
 							"__worldY": 32
 						},
@@ -1435,7 +1478,13 @@
 							"height": 32,
 							"defUid": 64,
 							"px": [384,96],
-							"fieldInstances": [{ "__identifier": "is_mad", "__type": "Bool", "__value": false, "__tile": null, "defUid": 65, "realEditorValues": [] }],
+							"fieldInstances": [
+								{ "__identifier": "is_mad", "__type": "Bool", "__value": false, "__tile": null, "defUid": 65, "realEditorValues": [] },
+								{ "__identifier": "travel", "__type": "Point", "__value": { "cx": 16, "cy": 3 }, "__tile": null, "defUid": 68, "realEditorValues": [{
+									"id": "V_String",
+									"params": ["16,3"]
+								}] }
+							],
 							"__worldX": 384,
 							"__worldY": 96
 						},
@@ -1451,7 +1500,13 @@
 							"height": 32,
 							"defUid": 64,
 							"px": [544,32],
-							"fieldInstances": [{ "__identifier": "is_mad", "__type": "Bool", "__value": false, "__tile": null, "defUid": 65, "realEditorValues": [] }],
+							"fieldInstances": [
+								{ "__identifier": "is_mad", "__type": "Bool", "__value": false, "__tile": null, "defUid": 65, "realEditorValues": [] },
+								{ "__identifier": "travel", "__type": "Point", "__value": { "cx": 14, "cy": 1 }, "__tile": null, "defUid": 68, "realEditorValues": [{
+									"id": "V_String",
+									"params": ["14,1"]
+								}] }
+							],
 							"__worldX": 544,
 							"__worldY": 32
 						},
@@ -1467,7 +1522,16 @@
 							"height": 32,
 							"defUid": 64,
 							"px": [96,32],
-							"fieldInstances": [{ "__identifier": "is_mad", "__type": "Bool", "__value": false, "__tile": null, "defUid": 65, "realEditorValues": [] }],
+							"fieldInstances": [
+								{ "__identifier": "is_mad", "__type": "Bool", "__value": true, "__tile": null, "defUid": 65, "realEditorValues": [{
+									"id": "V_Bool",
+									"params": [ true ]
+								}] },
+								{ "__identifier": "travel", "__type": "Point", "__value": { "cx": 7, "cy": 1 }, "__tile": null, "defUid": 68, "realEditorValues": [{
+									"id": "V_String",
+									"params": ["7,1"]
+								}] }
+							],
 							"__worldX": 96,
 							"__worldY": 32
 						}
