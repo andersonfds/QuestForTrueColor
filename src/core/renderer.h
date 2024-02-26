@@ -118,16 +118,6 @@ protected:
         return camera;
     }
 
-    Layer *GetLayer()
-    {
-        return layer;
-    }
-
-    ldtk::IID GetEntityID()
-    {
-        return entityID;
-    }
-
 public:
     /**
      * @brief Called when the node is created
@@ -172,6 +162,16 @@ public:
     void SetEntityID(ldtk::IID entityID)
     {
         this->entityID = entityID;
+    }
+
+    Layer *GetLayer()
+    {
+        return layer;
+    }
+
+    ldtk::IID GetEntityID()
+    {
+        return entityID;
     }
 };
 

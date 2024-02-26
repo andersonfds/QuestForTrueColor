@@ -5,8 +5,10 @@ using namespace olc::utils::geom2d;
 class Player : public Node
 {
 private:
-    Animation *idle;
-    Animation *walk;
+    AnimationController *idle;
+    AnimationController *walk;
+    AnimationController *jump;
+    AnimationController *fall;
 
     olc::vf2d *position;
     olc::vf2d *velocity;
@@ -29,20 +31,10 @@ private:
 public:
     void OnCreate()
     {
-        idle = new Animation(1.0f, {
-                                       "assets/player/idle_0.png",
-                                       "assets/player/idle_1.png",
-                                   });
-        walk = new Animation(0.5f, {
-                                       "assets/player/idle_1.png",
-                                       "assets/player/idle_0.png",
-                                       "assets/player/walk_L.png",
-                                       "assets/player/walk_L.png",
-                                       "assets/player/idle_1.png",
-                                       "assets/player/idle_0.png",
-                                       "assets/player/walk_R.png",
-                                       "assets/player/walk_R.png",
-                                   });
+        idle = new AnimationController(this, 0.4f, 0, {0, 1});
+        walk = new AnimationController(this, 0.1f, 0, {0, 3, 3, 0, 1, 2, 2, 1});
+        jump = new AnimationController(this, 0.1f, 0, {4, 4});
+        fall = new AnimationController(this, 0.1f, 0, {5, 5});
 
         Map *map = GetLayer()->GetNode<Map>();
         const auto &playerEntity = map->GetEntity(this->GetEntityID());
@@ -155,30 +147,46 @@ public:
         return velocity->y < 0 && !canJump;
     }
 
-    olc::Decal *GetAnimation(float fElapsedTime)
+    AnimationController *GetAnimation(float fElapsedTime)
     {
-        if (IsMoving())
+
+        if (IsJumping())
         {
-            return walk->GetFrame(fElapsedTime);
+            return jump;
         }
 
-        return idle->GetFrame(fElapsedTime);
+        if (!canJump)
+        {
+            return fall;
+        }
+
+        if (IsMoving())
+        {
+            return walk;
+        }
+
+        return idle;
     }
 
     void OnProcess(float fElapsedTime)
     {
         olc::vf2d scale = {1.0f, 1.0f};
-        olc::vf2d position = *this->position;
+
+        Map *map = GetLayer()->GetNode<Map>();
+        auto *animation = GetAnimation(fElapsedTime);
+
         Camera *camera = GetCamera();
+
+        olc::vf2d drawPos = *this->position;
 
         if (!isFacingRight)
         {
             scale.x = -1.0f;
-            position.x += 32;
+            drawPos.x += 32;
         }
 
-        camera->WorldToScreen(position);
-        GetEngine()->DrawDecal(position, GetAnimation(fElapsedTime), scale);
+        auto frame = animation->GetFrame(fElapsedTime);
+        map->DrawTile(drawPos, animation->tilesetId, frame, {32.0f, 32.0f}, scale);
 
         if (IsDebug())
         {

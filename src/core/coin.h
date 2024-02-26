@@ -5,10 +5,10 @@ class Coin : public Node
 private:
     olc::vf2d *position;
     olc::vf2d *rectPos;
-    int tilesetId;
     Map *map;
     Player *player;
     rect<float> *collider;
+    AnimationController *animationController;
 
 public:
     void OnCreate() override
@@ -17,23 +17,23 @@ public:
         player = GetLayer()->GetNode<Player>();
         const auto &coinEntity = map->GetEntity(this->GetEntityID());
         auto initialPosition = coinEntity.getPosition();
-        tilesetId = map->GetTilesetIDByPath(coinEntity.getTexturePath());
-        auto textureRect = coinEntity.getTextureRect();
-        rectPos = new olc::vf2d({static_cast<float>(textureRect.x), static_cast<float>(textureRect.y)});
         position = new olc::vf2d({static_cast<float>(initialPosition.x), static_cast<float>(initialPosition.y)});
-        olc::vf2d offset = {16.0f, 16.0f};
-        *position -= offset;
         collider = new rect<float>(*position, {32.0f, 32.0f});
+        int initialFrame = rand() % 5;
+        animationController = new AnimationController(this, 0.1f, initialFrame, {0, 1, 2, 3, 4});
     }
 
     void OnProcess(float fElapsedTime) override
     {
         Camera *camera = GetLayer()->GetCamera();
-        if (camera->IsOnScreen(*position))
+        if (!camera->IsOnScreen(*position))
         {
-            olc::vf2d pos = *position;
-            map->DrawTile(pos, tilesetId, *rectPos, {32.0f, 32.0f}, {1.0f, 1.0f});
+            return;
         }
+
+        auto frame = animationController->GetFrame(fElapsedTime);
+        olc::vf2d pos = *position;
+        map->DrawTile(pos, animationController->tilesetId, frame, {32.0f, 32.0f}, {1.0f, 1.0f});
 
         // Draw collider
         if (DEBUG)

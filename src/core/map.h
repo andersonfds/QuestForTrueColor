@@ -131,9 +131,6 @@ public:
         /// Draws the background color
         GetEngine()->FillRectDecal({0, 0}, {static_cast<float>(GetEngine()->ScreenWidth()), static_cast<float>(GetEngine()->ScreenHeight())}, bgColor);
 
-        /// Draws background layer
-        DrawLayer("background");
-
         /// Draws the platformer layer
         DrawLayer("platform");
 

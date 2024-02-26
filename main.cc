@@ -8,6 +8,7 @@ bool static DEBUG = true;
 int main()
 {
     QuestForTrueColor game;
+    srand(time(NULL));
 
     if (game.Construct(SCREEN_WIDTH, SCREEN_HEIGHT, 2, 2, false))
         game.Start();

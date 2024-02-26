@@ -11,6 +11,7 @@
 #include "core/renderer.h"
 #include "core/map.h"
 #include "core/animation.h"
+#include "core/bee.h"
 #include "core/player.h"
 #include "core/menu.h"
 #include "core/coin.h"
@@ -24,6 +25,9 @@ Node *CreateEntity(const ldtk::Entity &entity)
 
     if (name == "coin")
         return new Coin();
+
+    if (name == "bee")
+        return new Bee();
 
     return nullptr;
 }
@@ -75,6 +79,12 @@ public:
         }
 
         gameLayer->Process(fElapsedTime);
+
+        if (DEBUG)
+        {
+            std::string sFPS = "FPS: " + std::to_string(GetFPS());
+            DrawStringDecal({10, 10}, sFPS, olc::WHITE);
+        }
 
         return true;
     }
