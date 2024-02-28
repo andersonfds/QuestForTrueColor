@@ -15,6 +15,8 @@ private:
     std::vector<rect<float>> colliders;
     float distance = 0.0;
     std::vector<Node *> entities;
+    bool enableUI = false;
+    olc::vf2d *uiCoords;
 
     const ldtk::Level &getLevel()
     {
@@ -40,6 +42,7 @@ public:
         GetCamera()->size->y = level.size.y;
 
         /// Load colliders
+        colliders.clear();
         auto &collidersLayer = level.getLayer("colliders");
         for (int x = 0; x < collidersLayer.getGridSize().x; x++)
         {
@@ -64,6 +67,11 @@ public:
             GetLayer()->RemoveNode(entity);
         }
         entities.clear();
+        enableUI = level.getField<ldtk::FieldType::Bool>("enable_ui").value_or(false);
+
+        auto &worldEnum = ldtk_project.getWorld().getEnum("world")["base"];
+        auto &rect = worldEnum.getIconTextureRect();
+        uiCoords = new olc::vf2d(rect.x, rect.y);
     }
 
     void OnCreate() override
@@ -185,11 +193,12 @@ public:
         }
     }
 
-    void DrawTile(olc::vf2d pos, int tilesetID, olc::vf2d tileMap, olc::vf2d tileSize, olc::vf2d scale)
+    void DrawTile(olc::vf2d pos, int tilesetID, olc::vf2d tileMap, olc::vf2d tileSize, olc::vf2d scale, bool worldToScreen = true)
     {
         Camera *camera = GetCamera();
         olc::Decal *decal = tilesets[tilesetID].get();
-        camera->WorldToScreen(pos);
+        if (worldToScreen)
+            camera->WorldToScreen(pos);
         GetEngine()->DrawPartialDecal(pos, decal, tileMap, tileSize, scale);
     }
 
@@ -205,6 +214,22 @@ public:
         auto &level = getLevel();
         auto &entitiesLayer = level.getLayer("entities");
         return entitiesLayer.allEntities();
+    }
+
+    bool getEnableUI()
+    {
+        return enableUI;
+    }
+
+    void DrawIcon(olc::vf2d pos, olc::vi2d itemPos = {0, 0}, std::string enumValue = "base")
+    {
+        auto &worldEnum = ldtk_project.getWorld().getEnum("world");
+        auto tilesetId = worldEnum.getIconsTileset().uid;
+        auto &enumRect = worldEnum[enumValue];
+        auto &rect = enumRect.getIconTextureRect();
+        auto *uiCoords = new olc::vf2d(rect.x, rect.y);
+        *uiCoords += itemPos * 16;
+        DrawTile(pos, tilesetId, *uiCoords, {16, 16}, {1.0f, 1.0f}, false);
     }
 
     int GetTilesetIDByPath(std::string path)

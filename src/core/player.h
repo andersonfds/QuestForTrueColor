@@ -9,6 +9,7 @@ private:
     AnimationController *walk;
     AnimationController *jump;
     AnimationController *fall;
+    AnimationController *dead;
 
     olc::vf2d *position;
     olc::vf2d *velocity;
@@ -17,11 +18,14 @@ private:
     bool isFacingRight = true;
     bool canJump = false;
     bool isJumping = false;
+    bool isTryingToMove = false;
+    bool enableControls = true;
 
     int width = 18;
     int height = 32;
 
     int money = 0;
+    int lives;
 
     rect<float> *collider;
     ray<float> *downRay;
@@ -35,6 +39,7 @@ public:
         walk = new AnimationController(this, 0.1f, 0, {0, 3, 3, 0, 1, 2, 2, 1});
         jump = new AnimationController(this, 0.1f, 0, {4, 4});
         fall = new AnimationController(this, 0.1f, 0, {5, 5});
+        dead = new AnimationController(this, 0.1f, 0, {6, 6});
 
         Map *map = GetLayer()->GetNode<Map>();
         const auto &playerEntity = map->GetEntity(this->GetEntityID());
@@ -58,6 +63,8 @@ public:
         upRay->direction = {0, -1};
 
         collider = new rect<float>({0, 0}, {static_cast<float>(width), static_cast<float>(height)});
+        lives = 3;
+        money = 0;
     }
 
     void OnPhysicsProcess(float fElapsedTime)
@@ -79,7 +86,7 @@ public:
             velocity->y = 0;
         }
 
-        auto downRayIntersections = map->IsColliding(downRay, 18);
+        auto downRayIntersections = map->IsColliding(downRay, height / 2);
         canJump = downRayIntersections.size() > 0;
 
         if (canJump && velocity->y > 0)
@@ -89,7 +96,7 @@ public:
             acceleration->y = 0;
         }
 
-        if (GetEngine()->GetKey(olc::Key::UP).bHeld && canJump)
+        if (GetEngine()->GetKey(olc::Key::UP).bHeld && canJump && enableControls)
         {
             velocity->y = -200;
             canJump = false;
@@ -99,21 +106,27 @@ public:
         auto facingRayIntersections = map->IsColliding(facingRay, width / 2);
         bool isFacingWall = facingRayIntersections.size() > 0;
 
-        if (GetEngine()->GetKey(olc::Key::LEFT).bHeld)
+        if (GetEngine()->GetKey(olc::Key::LEFT).bHeld && enableControls)
         {
             if (!isFacingWall)
             {
                 velocity->x = -100;
             }
             isFacingRight = false;
+            isTryingToMove = true;
         }
-        else if (GetEngine()->GetKey(olc::Key::RIGHT).bHeld)
+        else if (GetEngine()->GetKey(olc::Key::RIGHT).bHeld && enableControls)
         {
             if (!isFacingWall)
             {
                 velocity->x = 100;
             }
             isFacingRight = true;
+            isTryingToMove = true;
+        }
+        else
+        {
+            isTryingToMove = false;
         }
 
         *position += *velocity * fElapsedTime;
@@ -122,9 +135,9 @@ public:
         downRay->origin.y += 16;
         facingRay->origin = *position;
         facingRay->origin.x += 16;
-        facingRay->origin.y += 16;
+        facingRay->origin.y += 30;
         facingRay->direction = isFacingRight ? olc::vf2d(1, 0) : olc::vf2d(-1, 0);
-        collider->pos = *position;
+        collider->pos = *position + olc::vf2d(width / 2, 0);
     }
 
     bool IsFacingRight()
@@ -149,6 +162,10 @@ public:
 
     AnimationController *GetAnimation(float fElapsedTime)
     {
+        if (lives <= 0)
+        {
+            return dead;
+        }
 
         if (IsJumping())
         {
@@ -160,7 +177,7 @@ public:
             return fall;
         }
 
-        if (IsMoving())
+        if (isTryingToMove)
         {
             return walk;
         }
@@ -190,15 +207,9 @@ public:
 
         if (IsDebug())
         {
-            int offsetX = (32 - this->width) / 2;
-            int offsetY = (32 - this->height) / 2;
-
-            olc::vf2d pos = *this->position;
-            pos.x += offsetX;
-            pos.y += offsetY;
-
+            olc::vf2d pos = collider->pos;
             camera->WorldToScreen(pos);
-            GetEngine()->DrawRectDecal(pos, {static_cast<float>(this->width), static_cast<float>(this->height)}, olc::RED);
+            GetEngine()->DrawRectDecal(pos, collider->size, olc::RED);
 
             // draw facing ray
             olc::vf2d facingRayOrigin = facingRay->origin;
@@ -222,6 +233,29 @@ public:
 
             GetEngine()->DrawLineDecal(downRayOrigin, downRayDirection, olc::YELLOW);
         }
+
+        if (lives <= 0)
+        {
+            GetEngine()->DrawStringDecal({10, 10}, "Game Over", olc::WHITE, {2, 2});
+            GetEngine()->DrawStringDecal({10, 50}, "Press ESC to restart", olc::WHITE, {2, 2});
+            enableControls = false;
+        }
+
+        if (map->getEnableUI())
+        {
+            if (money > 0)
+            {
+                olc::vf2d initialPos = {10.0f, GetEngine()->ScreenHeight() - 32.0f};
+                map->DrawIcon(initialPos, {0, 0});
+                GetEngine()->DrawStringDecal(initialPos + olc::vf2d(32, 0), std::to_string(money), olc::WHITE, {2, 2});
+            }
+
+            for (int i = 0; i < lives; i++)
+            {
+                olc::vf2d initialPos = {-10 + GetEngine()->ScreenWidth() - 16.0f * (i + 1), GetEngine()->ScreenHeight() - 32.0f};
+                map->DrawIcon(initialPos, {1, 0});
+            }
+        }
     }
 
     rect<float> *GetCollider()
@@ -232,6 +266,17 @@ public:
     void AddMoney(int amount)
     {
         money += amount;
+    }
+
+    void TakeDamage(int amount)
+    {
+        lives -= amount;
+        if (lives <= 0)
+        {
+            GetLayer()->GetEngine()->DrawStringDecal({10, 10}, "Game Over", olc::WHITE, {2, 2});
+            GetLayer()->GetEngine()->DrawStringDecal({10, 50}, "Press ESC to restart", olc::WHITE, {2, 2});
+            enableControls = false;
+        }
     }
 
     olc::vf2d *GetPosition()

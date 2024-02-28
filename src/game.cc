@@ -11,8 +11,9 @@
 #include "core/renderer.h"
 #include "core/map.h"
 #include "core/animation.h"
-#include "core/bee.h"
 #include "core/player.h"
+#include "core/bee.h"
+#include "core/items.h"
 #include "core/menu.h"
 #include "core/coin.h"
 
@@ -28,6 +29,12 @@ Node *CreateEntity(const ldtk::Entity &entity)
 
     if (name == "bee")
         return new Bee();
+
+    if (name == "bug_spray")
+        return new BugSpray();
+
+    if (name == "purse")
+        return new Purse();
 
     return nullptr;
 }

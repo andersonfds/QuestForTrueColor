@@ -1,7 +1,7 @@
 #define SCREEN_WIDTH 640
 #define SCREEN_HEIGHT 360
 
-bool static DEBUG = true;
+bool static DEBUG = false;
 
 #include "src/game.cc"
 
