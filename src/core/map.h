@@ -17,6 +17,7 @@ private:
     std::vector<Node *> entities;
     bool enableUI = false;
     olc::vf2d *uiCoords;
+    olc::Decal *background;
 
     const ldtk::Level &getLevel()
     {
@@ -37,6 +38,15 @@ public:
         auto &level = getLevel();
         bgColor = olc::Pixel(level.bg_color.r, level.bg_color.g, level.bg_color.b);
         colliders = std::vector<rect<float>>();
+
+        if (level.hasBgImage())
+        {
+            auto &bgImage = level.getBgImage();
+            const auto bgImagePath = bgImage.path.c_str();
+            auto fullImagePath = "assets/map_project/" + std::string(bgImagePath);
+            auto *sprite = new olc::Sprite(fullImagePath);
+            background = new olc::Decal(sprite);
+        }
 
         GetCamera()->size->x = level.size.x;
         GetCamera()->size->y = level.size.y;
@@ -136,8 +146,15 @@ public:
         Camera *camera = GetCamera();
         const auto &level = getLevel();
 
-        /// Draws the background color
-        GetEngine()->FillRectDecal({0, 0}, {static_cast<float>(GetEngine()->ScreenWidth()), static_cast<float>(GetEngine()->ScreenHeight())}, bgColor);
+        if (background != nullptr)
+        {
+            olc::vf2d pos = {0, 0};
+            GetEngine()->DrawDecal(pos, background, {1.0f, 1.0f});
+        }
+        else
+        {
+            GetEngine()->FillRectDecal({0, 0}, {static_cast<float>(GetEngine()->ScreenWidth()), static_cast<float>(GetEngine()->ScreenHeight())}, bgColor);
+        }
 
         /// Draws the platformer layer
         DrawLayer("platform");

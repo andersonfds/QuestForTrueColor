@@ -119,6 +119,16 @@ public:
             {
                 didHitPlayer = false;
             }
+
+            BugSpray *bugSpray = GetLayer()->GetNode<BugSpray>();
+            if (bugSpray != nullptr && bugSpray->IsSpraying())
+            {
+                auto beeCollider = rect<float>{*position, {32.0f, 32.0f}};
+                if (bugSpray->IsColliding(beeCollider))
+                {
+                    isMad = false;
+                }
+            }
         }
 
         // Draw collider

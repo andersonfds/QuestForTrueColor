@@ -177,6 +177,27 @@ public:
             p.velocity = vel;
         }
     }
+
+    bool IsColliding(rect<float> &collideRect)
+    {
+        for (auto &p : particles)
+        {
+            if (p.lifespan <= 0.0f)
+                continue;
+
+            rect<float> particleRect = rect<float>({p.position, {32.0f, 32.0f}});
+
+            if (overlaps(particleRect, collideRect))
+                return true;
+        }
+
+        return false;
+    }
+
+    bool IsSpraying()
+    {
+        return isSpraying;
+    }
 };
 
 class Purse : public Item
@@ -346,7 +367,8 @@ public:
 
     void OnProcess(float fElapsedTime) override
     {
-        if (isFollowingPlayer)
+        bool isAlive = !GetLayer()->GetNode<Player>()->IsDead();
+        if (isFollowingPlayer && isAlive)
             for (int i = 0; i < slots; i++)
             {
                 if (GetEngine()->GetKey((olc::Key)(olc::Key::K1 + i)).bPressed)
@@ -386,6 +408,46 @@ public:
             {
                 item->render = render;
             }
+        }
+    }
+};
+
+class Checkpoint : public Item
+{
+private:
+    bool isActivated;
+
+public:
+    void OnEntityDefined(const ldtk::Entity &entity) override
+    {
+        Item::OnEntityDefined(entity);
+        isActivated = false;
+    }
+
+    void OnScreen(float fElapsedTime) override
+    {
+        Map *map = GetLayer()->GetNode<Map>();
+        olc::vf2d displayPosition = *this->position;
+        olc::vf2d scale = {1.0f, 1.0f};
+        displayPosition.y += 5.0f;
+        olc::vi2d tile = {0, 0};
+
+        if (isActivated)
+        {
+            tile.x = 1;
+        }
+
+        if (render)
+            map->DrawIcon(displayPosition, tile, "checkpoint", 32, true);
+    }
+
+    void OnPhysicsProcess(float fElapsedTime) override
+    {
+        // if overlaps with user activates it
+        if (overlaps(*GetLayer()->GetNode<Player>()->GetCollider(), GetCollider()))
+        {
+            GetLayer()->GetNode<Player>()->SetCheckpoint(*this->position);
+            isActivated = true;
         }
     }
 };

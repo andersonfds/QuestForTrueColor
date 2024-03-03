@@ -67,6 +67,7 @@ private:
     AnimationController *fall;
     AnimationController *dead;
     Item *canActivateItem;
+    olc::vf2d *lastCheckpoint;
 
     olc::vf2d *position;
     olc::vf2d *velocity;
@@ -100,10 +101,16 @@ public:
         dead = new AnimationController(this, 0.1f, 0, {6, 6});
 
         Map *map = GetLayer()->GetNode<Map>();
-        const auto &playerEntity = map->GetEntity(this->GetEntityID());
-        auto initialPosition = playerEntity.getPosition();
 
-        position = new olc::vf2d({static_cast<float>(initialPosition.x), static_cast<float>(initialPosition.y)});
+        const auto &playerEntity = map->GetEntity(this->GetEntityID());
+        if (lastCheckpoint == nullptr)
+        {
+            auto initialPosition = playerEntity.getPosition();
+            lastCheckpoint = new olc::vf2d({static_cast<float>(initialPosition.x), static_cast<float>(initialPosition.y)});
+        }
+
+        position = new olc::vf2d(*lastCheckpoint);
+
         velocity = new olc::vf2d(0, 0);
         acceleration = new olc::vf2d(0, 0);
         GetCamera()->position = position;
@@ -285,7 +292,7 @@ public:
 
         if (!camera->IsOnScreen(*position))
         {
-            lives = 0;
+            TakeDamage(1);
         }
 
         olc::vf2d drawPos = *this->position;
@@ -310,6 +317,7 @@ public:
             else
             {
                 canActivateItem->OnDeactivate();
+                canActivateItem = nullptr;
             }
         }
 
@@ -383,13 +391,40 @@ public:
 
     void TakeDamage(int amount)
     {
-        lives -= amount;
-        if (lives <= 0)
+        if (money <= 0)
         {
-            GetLayer()->GetEngine()->DrawStringDecal({10, 10}, "Game Over", olc::WHITE, {2, 2});
-            GetLayer()->GetEngine()->DrawStringDecal({10, 50}, "Press ESC to restart", olc::WHITE, {2, 2});
-            enableControls = false;
+            lives -= amount;
+
+            if (lives <= 0)
+            {
+                GetLayer()->GetEngine()->DrawStringDecal({10, 10}, "Game Over", olc::WHITE, {2, 2});
+                GetLayer()->GetEngine()->DrawStringDecal({10, 50}, "Press ESC to restart", olc::WHITE, {2, 2});
+                enableControls = false;
+                return;
+            }
+            else
+            {
+                if (canActivateItem != nullptr)
+                {
+                    canActivateItem->OnDeactivate();
+                }
+                *position = *lastCheckpoint;
+            }
         }
+        else
+        {
+            money = 0;
+        }
+    }
+
+    void SetCheckpoint(olc::vf2d checkpoint)
+    {
+        *lastCheckpoint = checkpoint;
+    }
+
+    bool IsDead()
+    {
+        return lives <= 0;
     }
 
     olc::vf2d *GetPosition()
