@@ -126,7 +126,7 @@ public:
 
         if (!isFollowingPlayer && overlapsPlayer)
         {
-            auto text = "Spray";
+            auto text = "Bug Spray";
             auto textSize = GetEngine()->GetTextSize(text) * 0.5f;
             Camera *camera = GetLayer()->GetCamera();
             camera->WorldToScreen(displayPosition);
