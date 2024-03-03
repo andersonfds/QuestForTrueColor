@@ -193,7 +193,7 @@ public:
         }
     }
 
-    void DrawTile(olc::vf2d pos, int tilesetID, olc::vf2d tileMap, olc::vf2d tileSize, olc::vf2d scale, bool worldToScreen = true)
+    void DrawTile(olc::vf2d pos, int tilesetID, olc::vf2d tileMap, olc::vf2d tileSize, olc::vf2d scale = {1.0f, 1.0f}, bool worldToScreen = true)
     {
         Camera *camera = GetCamera();
         olc::Decal *decal = tilesets[tilesetID].get();
@@ -221,15 +221,15 @@ public:
         return enableUI;
     }
 
-    void DrawIcon(olc::vf2d pos, olc::vi2d itemPos = {0, 0}, std::string enumValue = "base")
+    void DrawIcon(olc::vf2d pos, olc::vi2d itemPos = {0, 0}, std::string enumValue = "base", float factor = 16.0f, bool worldToScreen = false)
     {
         auto &worldEnum = ldtk_project.getWorld().getEnum("world");
         auto tilesetId = worldEnum.getIconsTileset().uid;
         auto &enumRect = worldEnum[enumValue];
         auto &rect = enumRect.getIconTextureRect();
         auto *uiCoords = new olc::vf2d(rect.x, rect.y);
-        *uiCoords += itemPos * 16;
-        DrawTile(pos, tilesetId, *uiCoords, {16, 16}, {1.0f, 1.0f}, false);
+        *uiCoords += itemPos * factor;
+        DrawTile(pos, tilesetId, *uiCoords, {factor, factor}, {1.0f, 1.0f}, worldToScreen);
     }
 
     int GetTilesetIDByPath(std::string path)
@@ -240,6 +240,22 @@ public:
         for (auto &tileset : tilesets)
         {
             if (tileset.path == path)
+            {
+                return tileset.uid;
+            }
+        }
+
+        return -1;
+    }
+
+    int GetTilesetIDByName(std::string name)
+    {
+        auto &world = ldtk_project.getWorld();
+        auto &tilesets = world.allTilesets();
+
+        for (auto &tileset : tilesets)
+        {
+            if (tileset.name == name)
             {
                 return tileset.uid;
             }

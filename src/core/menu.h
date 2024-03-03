@@ -42,6 +42,7 @@ public:
             gameLayer->OnCreate();
             SetLevel("level_1");
             gameLayer->RemoveNode(this);
+
             break;
         }
 

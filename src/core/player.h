@@ -2,6 +2,62 @@
 
 using namespace olc::utils::geom2d;
 
+class Item : public Node
+{
+public:
+    olc::vf2d *position;
+    olc::vf2d *framePosition;
+    bool render;
+    int tilesetId;
+
+public:
+    void OnCreate() override
+    {
+        Map *map = GetLayer()->GetNode<Map>();
+        const auto &itemEntity = map->GetEntity(this->GetEntityID());
+        auto position = itemEntity.getPosition();
+
+        this->tilesetId = map->GetTilesetIDByPath(itemEntity.getTexturePath());
+        this->position = new olc::vf2d({static_cast<float>(position.x), static_cast<float>(position.y)});
+
+        auto texture = itemEntity.getTextureRect();
+        this->framePosition = new olc::vf2d({static_cast<float>(texture.x), static_cast<float>(texture.y)});
+
+        render = true;
+        OnEntityDefined(itemEntity);
+    }
+
+    virtual void OnEntityDefined(const ldtk::Entity &entity) {}
+
+    virtual void OnScreen(float fElapsedTime) {}
+
+    virtual void OnActivate() {}
+
+    virtual void OnDeactivate() {}
+
+    virtual void OnInteract(float fElapsedTime) {}
+
+    virtual void OnExitInteract() {}
+
+    virtual void CanEnableOther(Item *item) {}
+
+    void OnProcess(float fElapsedTime) override
+    {
+        Camera *camera = GetCamera();
+        if (!camera->IsOnScreen(*position))
+        {
+            return;
+        }
+
+        OnScreen(fElapsedTime);
+    }
+
+    rect<float> GetCollider()
+    {
+        return rect<float>(*position, {32.0f, 32.0f});
+    }
+};
+
 class Player : public Node
 {
 private:
@@ -10,6 +66,7 @@ private:
     AnimationController *jump;
     AnimationController *fall;
     AnimationController *dead;
+    Item *canActivateItem;
 
     olc::vf2d *position;
     olc::vf2d *velocity;
@@ -20,6 +77,7 @@ private:
     bool isJumping = false;
     bool isTryingToMove = false;
     bool enableControls = true;
+    bool didActivateItem = false;
 
     int width = 18;
     int height = 32;
@@ -129,6 +187,15 @@ public:
             isTryingToMove = false;
         }
 
+        if (didActivateItem && canActivateItem != nullptr && enableControls && GetEngine()->GetKey(olc::Key::Z).bHeld)
+        {
+            canActivateItem->OnInteract(fElapsedTime);
+        }
+        else if (canActivateItem != nullptr)
+        {
+            canActivateItem->OnExitInteract();
+        }
+
         *position += *velocity * fElapsedTime;
         downRay->origin = *position;
         downRay->origin.x += 16;
@@ -185,6 +252,28 @@ public:
         return idle;
     }
 
+    void CanActivate(Item *item)
+    {
+        if (canActivateItem == nullptr)
+        {
+            canActivateItem = item;
+            didActivateItem = false;
+        }
+        else if (canActivateItem != item)
+        {
+            canActivateItem->CanEnableOther(item);
+        }
+    }
+
+    void ExitItem(Item *item)
+    {
+        if (canActivateItem == item)
+        {
+            canActivateItem = nullptr;
+            didActivateItem = false;
+        }
+    }
+
     void OnProcess(float fElapsedTime)
     {
         olc::vf2d scale = {1.0f, 1.0f};
@@ -193,6 +282,11 @@ public:
         auto *animation = GetAnimation(fElapsedTime);
 
         Camera *camera = GetCamera();
+
+        if (!camera->IsOnScreen(*position))
+        {
+            lives = 0;
+        }
 
         olc::vf2d drawPos = *this->position;
 
@@ -204,6 +298,20 @@ public:
 
         auto frame = animation->GetFrame(fElapsedTime);
         map->DrawTile(drawPos, animation->tilesetId, frame, {32.0f, 32.0f}, scale);
+
+        if (canActivateItem != nullptr && GetEngine()->GetKey(olc::Key::SPACE).bPressed)
+        {
+            didActivateItem = !didActivateItem;
+
+            if (didActivateItem)
+            {
+                canActivateItem->OnActivate();
+            }
+            else
+            {
+                canActivateItem->OnDeactivate();
+            }
+        }
 
         if (IsDebug())
         {
@@ -243,13 +351,12 @@ public:
 
         if (map->getEnableUI())
         {
-            if (money > 0)
-            {
-                olc::vf2d initialPos = {10.0f, GetEngine()->ScreenHeight() - 32.0f};
-                map->DrawIcon(initialPos, {0, 0});
-                GetEngine()->DrawStringDecal(initialPos + olc::vf2d(32, 0), std::to_string(money), olc::WHITE, {2, 2});
-            }
+            // Draw money
+            olc::vf2d initialPos = {10.0f, GetEngine()->ScreenHeight() - 32.0f};
+            map->DrawIcon(initialPos, {0, 0});
+            GetEngine()->DrawStringDecal(initialPos + olc::vf2d(32, 0), std::to_string(money), olc::WHITE, {2, 2});
 
+            // Draw lives
             for (int i = 0; i < lives; i++)
             {
                 olc::vf2d initialPos = {-10 + GetEngine()->ScreenWidth() - 16.0f * (i + 1), GetEngine()->ScreenHeight() - 32.0f};
@@ -266,6 +373,12 @@ public:
     void AddMoney(int amount)
     {
         money += amount;
+
+        if (money >= 10)
+        {
+            money = 0;
+            lives++;
+        }
     }
 
     void TakeDamage(int amount)
