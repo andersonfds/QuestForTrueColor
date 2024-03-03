@@ -31,6 +31,7 @@ class BugSpray : public Item
 private:
     bool isFollowingPlayer;
     bool isSpraying;
+    bool didSprayOnce;
     float delta = 0.0f;
     std::vector<Particle> particles;
     int particlesCount = 80;
@@ -51,6 +52,7 @@ public:
         isSpraying = false;
         delta = 0.0f;
         particleTimes = 0;
+        didSprayOnce = false;
     }
 
     void OnScreen(float fElapsedTime) override
@@ -134,11 +136,29 @@ public:
             displayPosition.x += 16.0f;
             GetEngine()->DrawStringDecal(displayPosition, text, olc::WHITE);
         }
+        else if (isFollowingPlayer && !didSprayOnce)
+        {
+            auto text = "Press Z to spray";
+            auto textSize = GetEngine()->GetTextSize(text) * 0.5f;
+            Camera *camera = GetLayer()->GetCamera();
+            camera->WorldToScreen(displayPosition);
+            displayPosition -= textSize;
+            displayPosition.x += 16.0f;
+            displayPosition.y -= 32.0f;
+
+            if (!player->IsFacingRight())
+            {
+                displayPosition.x -= 32.0f;
+            }
+
+            GetEngine()->DrawStringDecal(displayPosition, text, olc::WHITE);
+        }
     }
 
     void OnInteract(float fElapsedTime) override
     {
         isSpraying = true;
+        didSprayOnce = true;
 
         if (particleDelta > 0.2f || particleDelta == 0.0f)
         {

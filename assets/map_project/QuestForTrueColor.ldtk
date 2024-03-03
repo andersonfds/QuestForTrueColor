@@ -1543,7 +1543,7 @@
 						},
 						{
 							"__identifier": "bee",
-							"__grid": [10,1],
+							"__grid": [17,1],
 							"__pivot": [0,0],
 							"__tags": [],
 							"__tile": { "tilesetUid": 2, "x": 32, "y": 192, "w": 32, "h": 32 },
@@ -1552,18 +1552,18 @@
 							"width": 32,
 							"height": 32,
 							"defUid": 64,
-							"px": [320,32],
+							"px": [544,32],
 							"fieldInstances": [
 								{ "__identifier": "is_mad", "__type": "Bool", "__value": true, "__tile": null, "defUid": 65, "realEditorValues": [{
 									"id": "V_Bool",
 									"params": [ true ]
 								}] },
-								{ "__identifier": "travel", "__type": "Point", "__value": { "cx": 12, "cy": 1 }, "__tile": null, "defUid": 68, "realEditorValues": [{
+								{ "__identifier": "travel", "__type": "Point", "__value": { "cx": 15, "cy": 1 }, "__tile": null, "defUid": 68, "realEditorValues": [{
 									"id": "V_String",
-									"params": ["12,1"]
+									"params": ["15,1"]
 								}] }
 							],
-							"__worldX": 320,
+							"__worldX": 544,
 							"__worldY": 32
 						},
 						{
@@ -1666,38 +1666,6 @@
 							],
 							"__worldX": 192,
 							"__worldY": 0
-						},
-						{
-							"__identifier": "bug_spray",
-							"__grid": [10,4],
-							"__pivot": [0,0],
-							"__tags": [],
-							"__tile": { "tilesetUid": 2, "x": 0, "y": 192, "w": 32, "h": 32 },
-							"__smartColor": "#733E39",
-							"iid": "0cfbdda0-b0a0-11ee-a904-4b39d56f7786",
-							"width": 32,
-							"height": 32,
-							"defUid": 69,
-							"px": [320,128],
-							"fieldInstances": [],
-							"__worldX": 320,
-							"__worldY": 128
-						},
-						{
-							"__identifier": "coin",
-							"__grid": [19,5],
-							"__pivot": [0,0],
-							"__tags": [],
-							"__tile": { "tilesetUid": 2, "x": 32, "y": 160, "w": 32, "h": 32 },
-							"__smartColor": "#B49D13",
-							"iid": "19cd32c0-b0a0-11ee-a904-9973416aa739",
-							"width": 32,
-							"height": 32,
-							"defUid": 63,
-							"px": [608,160],
-							"fieldInstances": [],
-							"__worldX": 608,
-							"__worldY": 160
 						},
 						{
 							"__identifier": "coin",
@@ -1874,6 +1842,22 @@
 							"fieldInstances": [],
 							"__worldX": 864,
 							"__worldY": 160
+						},
+						{
+							"__identifier": "bug_spray",
+							"__grid": [20,1],
+							"__pivot": [0,0],
+							"__tags": [],
+							"__tile": { "tilesetUid": 2, "x": 0, "y": 192, "w": 32, "h": 32 },
+							"__smartColor": "#733E39",
+							"iid": "aec66600-d7b0-11ee-8816-0376ce02a26a",
+							"width": 32,
+							"height": 32,
+							"defUid": 69,
+							"px": [640,32],
+							"fieldInstances": [],
+							"__worldX": 640,
+							"__worldY": 32
 						}
 					]
 				},
