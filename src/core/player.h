@@ -66,6 +66,7 @@ private:
     AnimationController *jump;
     AnimationController *fall;
     AnimationController *dead;
+    bool hasFlower = false;
     Item *canActivateItem;
     olc::vf2d *lastCheckpoint;
 
@@ -79,6 +80,7 @@ private:
     bool isTryingToMove = false;
     bool enableControls = true;
     bool didActivateItem = false;
+    bool canGoToNextLevel = false;
 
     int width = 18;
     int height = 32;
@@ -99,6 +101,7 @@ public:
         jump = new AnimationController(this, 0.1f, 0, {4, 4});
         fall = new AnimationController(this, 0.1f, 0, {5, 5});
         dead = new AnimationController(this, 0.1f, 0, {6, 6});
+        hasFlower = false;
 
         Map *map = GetLayer()->GetNode<Map>();
 
@@ -115,6 +118,7 @@ public:
         acceleration = new olc::vf2d(0, 0);
         GetCamera()->position = position;
         olc::vf2d offset = {GetEngine()->ScreenWidth() / 2.0f, GetEngine()->ScreenHeight() / 3.0f * 2 - 20};
+
         GetCamera()->offset->x = offset.x;
         GetCamera()->offset->y = offset.y;
 
@@ -127,7 +131,7 @@ public:
         upRay = new ray<float>();
         upRay->direction = {0, -1};
 
-        collider = new rect<float>({0, 0}, {static_cast<float>(width), static_cast<float>(height)});
+        collider = new rect<float>(*position, {static_cast<float>(width), static_cast<float>(height)});
         lives = 3;
         money = 0;
     }
@@ -306,7 +310,7 @@ public:
         auto frame = animation->GetFrame(fElapsedTime);
         map->DrawTile(drawPos, animation->tilesetId, frame, {32.0f, 32.0f}, scale);
 
-        if (canActivateItem != nullptr && GetEngine()->GetKey(olc::Key::SPACE).bPressed)
+        if (canActivateItem != nullptr && GetEngine()->GetKey(olc::Key::SPACE).bPressed && enableControls && !map->HasDialogs())
         {
             didActivateItem = !didActivateItem;
 
@@ -408,7 +412,8 @@ public:
                 {
                     canActivateItem->OnDeactivate();
                 }
-                *position = *lastCheckpoint;
+                if (lastCheckpoint != nullptr)
+                    *position = *lastCheckpoint;
             }
         }
         else
@@ -430,5 +435,40 @@ public:
     olc::vf2d *GetPosition()
     {
         return this->position;
+    }
+
+    void DisableControls()
+    {
+        enableControls = false;
+    }
+
+    void EnableControls()
+    {
+        enableControls = true;
+    }
+
+    void SetHasFlower(bool hasFlower)
+    {
+        this->hasFlower = hasFlower;
+    }
+
+    bool HasFlower()
+    {
+        return hasFlower;
+    }
+
+    void SetCanGoToNextLevel(bool canGoToNextLevel)
+    {
+        this->canGoToNextLevel = canGoToNextLevel;
+    }
+
+    bool CanGoToNextLevel()
+    {
+        return canGoToNextLevel;
+    }
+
+    void ClearCheckpoints()
+    {
+        lastCheckpoint = nullptr;
     }
 };

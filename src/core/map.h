@@ -4,6 +4,8 @@
 
 using namespace olc::utils::geom2d;
 
+Node *CreateEntity(const ldtk::Entity &entity);
+
 class Map : public Node
 {
 
@@ -18,6 +20,9 @@ private:
     bool enableUI = false;
     olc::vf2d *uiCoords;
     olc::Decal *background;
+    std::vector<std::string> dialogues;
+    float dialogTime = 0.0f;
+    bool persist = false;
 
     const ldtk::Level &getLevel()
     {
@@ -77,6 +82,21 @@ public:
             GetLayer()->RemoveNode(entity);
         }
         entities.clear();
+
+        auto &entities = GetAllEntities();
+
+        for (auto &entity : entities)
+        {
+            Node *node = CreateEntity(entity);
+
+            if (node == nullptr)
+                continue;
+
+            node->SetEntityID(entity.iid);
+            GetLayer()->AddNode(node);
+            node->OnCreate();
+        }
+
         enableUI = level.getField<ldtk::FieldType::Bool>("enable_ui").value_or(false);
 
         auto &worldEnum = ldtk_project.getWorld().getEnum("world")["base"];
@@ -99,6 +119,8 @@ public:
             std::unique_ptr<olc::Decal> decal = std::make_unique<olc::Decal>(sprite);
             this->tilesets[tileset.uid] = std::move(decal);
         }
+
+        AddDialog("Welcome to Quest for True Color!");
     }
 
     std::vector<olc::vf2d> IsColliding(ray<float> *ray, float distance)
@@ -158,6 +180,32 @@ public:
 
         /// Draws the platformer layer
         DrawLayer("platform");
+
+        // Drawing dialog
+        if (dialogues.size() > 0)
+        {
+            if (GetEngine()->GetKey(olc::Key::SPACE).bPressed)
+            {
+                dialogTime = 0.0f;
+                dialogues.erase(dialogues.begin());
+            }
+
+            if (!persist)
+                dialogTime += fElapsedTime;
+
+            if (dialogTime > 3.0f)
+            {
+                dialogTime = 0.0f;
+                dialogues.erase(dialogues.begin());
+            }
+            else
+            {
+                auto textSize = GetEngine()->GetTextSize(dialogues[0]);
+                float height = textSize.y + 20;
+                GetEngine()->FillRectDecal({10, 10}, {static_cast<float>(GetEngine()->ScreenWidth() - 20.0f), height}, olc::Pixel(0, 0, 0, 200));
+                GetEngine()->DrawStringDecal({20, 20}, dialogues[0], olc::WHITE);
+            }
+        }
 
         // Draw colliders if debug mode is enabled
         if (DEBUG)
@@ -279,5 +327,25 @@ public:
         }
 
         return -1;
+    }
+
+    void ClearDialogs()
+    {
+        dialogues.clear();
+    }
+
+    void AddDialog(std::string dialogue, bool persist = false)
+    {
+        if (persist)
+        {
+            this->persist = true;
+        }
+
+        dialogues.push_back(dialogue);
+    }
+
+    bool HasDialogs()
+    {
+        return dialogues.size() > 0;
     }
 };

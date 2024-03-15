@@ -57,19 +57,6 @@ public:
     {
         Map *map = gameLayer->GetNode<Map>();
         map->SetActiveLevel(level);
-        auto &entities = map->GetAllEntities();
-
-        for (auto &entity : entities)
-        {
-            Node *node = CreateEntity(entity);
-
-            if (node == nullptr)
-                continue;
-
-            node->SetEntityID(entity.iid);
-            gameLayer->AddNode(node);
-            node->OnCreate();
-        }
     }
 
     void OnProcess(float fElapsedTime) override

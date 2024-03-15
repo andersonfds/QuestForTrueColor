@@ -16,6 +16,7 @@
 #include "core/bee.h"
 #include "core/menu.h"
 #include "core/coin.h"
+#include "core/anderson.h"
 
 Node *CreateEntity(const ldtk::Entity &entity)
 {
@@ -38,6 +39,12 @@ Node *CreateEntity(const ldtk::Entity &entity)
 
     if (name == "checkpoint")
         return new Checkpoint();
+
+    if (name == "anderson")
+        return new Anderson();
+
+    if (name == "flower")
+        return new Flower();
 
     return nullptr;
 }

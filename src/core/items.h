@@ -471,3 +471,130 @@ public:
         }
     }
 };
+
+class Flower : public Item
+{
+private:
+    bool isFollowingPlayer;
+    float delta = 0.0f;
+    olc::vf2d direction;
+
+public:
+    void OnCreate() override
+    {
+        Item::OnCreate();
+        isFollowingPlayer = false;
+        delta = 0.0f;
+    }
+
+    void OnScreen(float fElapsedTime) override
+    {
+        Map *map = GetLayer()->GetNode<Map>();
+        Player *player = GetLayer()->GetNode<Player>();
+        olc::vf2d displayPosition = *this->position;
+        olc::vf2d scale = {1.0f, 1.0f};
+        bool overlapsPlayer = false;
+        int playerDirection = player->IsFacingRight() ? 1 : -1;
+        direction.x = playerDirection;
+
+        if (!isFollowingPlayer)
+        {
+            auto playerCollider = player->GetCollider();
+            overlapsPlayer = overlaps(*playerCollider, GetCollider());
+            if (overlapsPlayer)
+            {
+                player->CanActivate(this);
+            }
+            else
+            {
+                player->ExitItem(this);
+            }
+
+            position->x = ((int)displayPosition.x + 16) / 32 * 32;
+            position->y = ((int)displayPosition.y + 16) / 32 * 32;
+        }
+
+        if (!isFollowingPlayer)
+        {
+            delta += fElapsedTime;
+
+            if (delta > 1.0f)
+            {
+                delta = 0.0f;
+            }
+
+            displayPosition.y += sin(delta * 3.14159f) * 5.0f;
+        }
+        else
+        {
+            *position = *player->GetPosition();
+            scale.x = playerDirection;
+            if (!player->IsFacingRight())
+            {
+                displayPosition.x += 32.0f;
+            }
+        }
+
+        if (render)
+            map->DrawTile(displayPosition, tilesetId, *this->framePosition, {32.0f, 32.0f}, scale, true);
+
+        if (!isFollowingPlayer && overlapsPlayer)
+        {
+            auto text = "Unknown Flower";
+            auto textSize = GetEngine()->GetTextSize(text) * 0.5f;
+            Camera *camera = GetLayer()->GetCamera();
+            camera->WorldToScreen(displayPosition);
+            displayPosition -= textSize;
+            displayPosition.x += 16.0f;
+            GetEngine()->DrawStringDecal(displayPosition, text, olc::WHITE);
+        }
+    }
+
+    void OnActivate() override
+    {
+        isFollowingPlayer = true;
+        Player *player = GetLayer()->GetNode<Player>();
+        player->SetHasFlower(true);
+    }
+
+    void OnDeactivate() override
+    {
+        isFollowingPlayer = false;
+        Player *player = GetLayer()->GetNode<Player>();
+        player->SetHasFlower(false);
+    }
+};
+
+class TeleportPoint : public Item
+{
+private:
+    float delta = 0.0f;
+    olc::vf2d direction;
+
+public:
+    void OnCreate() override
+    {
+        Item::OnCreate();
+        delta = 0.0f;
+    }
+
+    void OnScreen(float fElapsedTime) override
+    {
+        Map *map = GetLayer()->GetNode<Map>();
+        Player *player = GetLayer()->GetNode<Player>();
+        olc::vf2d displayPosition = *this->position;
+        olc::vf2d scale = {1.0f, 1.0f};
+        bool overlapsPlayer = false;
+        int playerDirection = player->IsFacingRight() ? 1 : -1;
+        direction.x = playerDirection;
+
+        auto playerCollider = player->GetCollider();
+        overlapsPlayer = overlaps(*playerCollider, GetCollider());
+
+        position->x = ((int)displayPosition.x + 16) / 32 * 32;
+        position->y = ((int)displayPosition.y + 16) / 32 * 32;
+
+        if (DEBUG)
+            GetEngine()->DrawRectDecal(displayPosition, {32.0f, 32.0f}, olc::WHITE);
+    }
+};

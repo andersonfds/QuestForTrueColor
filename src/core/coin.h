@@ -14,8 +14,12 @@ public:
     void OnPhysicsProcess(float fElapsedTime) override
     {
         Camera *camera = GetLayer()->GetCamera();
+        player = GetLayer()->GetNode<Player>();
+
         if (camera->IsOnScreen(*position))
         {
+            if (player == nullptr)
+                return;
             if (overlaps(*collider, *player->GetCollider()))
             {
                 player->AddMoney(1);

@@ -47,10 +47,10 @@ struct Camera
         geom2d::rect<float> objectRect = geom2d::rect<float>(pos, {16, 16});
 
         // add some padding to the camera
-        cameraRect.pos.x -= 100;
-        cameraRect.pos.y -= 100;
-        cameraRect.size.x += 100;
-        cameraRect.size.y += 100;
+        cameraRect.pos.x -= 40;
+        cameraRect.pos.y -= 40;
+        cameraRect.size.x += 40;
+        cameraRect.size.y += 40;
 
         // account for the offset
         cameraRect.pos.x -= offset->x;

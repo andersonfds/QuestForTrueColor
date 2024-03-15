@@ -51,19 +51,19 @@ public:
     {
         Camera *camera = GetLayer()->GetCamera();
 
-        if (!camera->IsOnScreen(*position))
-        {
-            if (timeOffscreen > 30.0f)
-            {
-                return;
-            }
+        // if (!camera->IsOnScreen(*position))
+        // {
+        //     if (timeOffscreen > 30.0f)
+        //     {
+        //         return;
+        //     }
 
-            timeOffscreen += fElapsedTime;
-        }
-        else
-        {
-            timeOffscreen = 0.0f;
-        }
+        //     timeOffscreen += fElapsedTime;
+        // }
+        // else
+        // {
+        //     timeOffscreen = 0.0f;
+        // }
 
         if (travelTo != nullptr)
         {
