@@ -208,6 +208,16 @@ public:
         nodes.erase(std::remove(nodes.begin(), nodes.end(), node), nodes.end());
     }
 
+    void ClearNodes()
+    {
+        for (auto node : nodes)
+        {
+            node->OnDestroy();
+        }
+
+        nodes.clear();
+    }
+
     void Process(float fElapsedTime)
     {
         for (auto node : nodes)

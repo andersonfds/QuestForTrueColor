@@ -31,6 +31,8 @@ public:
 
     virtual void OnScreen(float fElapsedTime) {}
 
+    virtual void OnOffScreen(float fElapsedTime) {}
+
     virtual void OnActivate() {}
 
     virtual void OnDeactivate() {}
@@ -47,6 +49,13 @@ public:
         if (!camera->IsOnScreen(*position))
         {
             return;
+        }
+
+        if (DEBUG)
+        {
+            olc::vf2d pos = *position;
+            camera->WorldToScreen(pos);
+            GetEngine()->DrawRectDecal(pos, {32, 32}, olc::BLUE);
         }
 
         OnScreen(fElapsedTime);
@@ -375,6 +384,10 @@ public:
                 map->DrawIcon(initialPos, {1, 0});
             }
         }
+    }
+
+    void OnTeleportedToAnotherLevel()
+    {
     }
 
     rect<float> *GetCollider()

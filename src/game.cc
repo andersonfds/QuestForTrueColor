@@ -46,6 +46,9 @@ Node *CreateEntity(const ldtk::Entity &entity)
     if (name == "flower")
         return new Flower();
 
+    if (name == "portal")
+        return new TeleportPoint();
+
     return nullptr;
 }
 

@@ -7,7 +7,6 @@ private:
     AnimationController *idle;
     AnimationController *idleVillain;
     float delta = 0.0f;
-    olc::vf2d *position;
     bool dialogMode = false;
     bool didSmell = false;
     bool isVillain = false;
@@ -17,7 +16,7 @@ public:
     void OnEntityDefined(const ldtk::Entity &entity) override
     {
         Item::OnEntityDefined(entity);
-        auto initialPosition = entity.getWorldPosition();
+        auto initialPosition = entity.getPosition();
         position = new olc::vf2d({static_cast<float>(initialPosition.x), static_cast<float>(initialPosition.y)});
         idle = new AnimationController(this, 0.4f, 0, {0, 1});
         idleVillain = new AnimationController(this, 0.4f, 0, {2, 2});
@@ -47,7 +46,6 @@ public:
 
         if (didSmell && !map->HasDialogs() && !isVillain)
         {
-            player->EnableControls();
             dialogMode = false;
             map->AddDialog("Anderson: Whoa! I don't feel too good", true);
             map->AddDialog("Anderson: I think I'm allergic to this flower");
@@ -68,7 +66,6 @@ public:
             else
             {
                 player->EnableControls();
-                GetLayer()->RemoveNode(this);
                 dialogMode = false;
                 Flower *flower = GetLayer()->GetNode<Flower>();
                 GetLayer()->RemoveNode(flower);
@@ -93,6 +90,12 @@ public:
                 map->AddDialog("     You: Sure, go ahead.");
                 didSmell = true;
             }
+        }
+
+        if (!dialogMode && didSmell)
+        {
+            player->EnableControls();
+            GetLayer()->GetNode<TeleportPoint>()->Enable();
         }
 
         auto *animation = GetCurrentAnimation();

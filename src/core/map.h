@@ -43,6 +43,7 @@ public:
         auto &level = getLevel();
         bgColor = olc::Pixel(level.bg_color.r, level.bg_color.g, level.bg_color.b);
         colliders = std::vector<rect<float>>();
+        ClearDialogs();
 
         if (level.hasBgImage())
         {
@@ -55,6 +56,10 @@ public:
 
         GetCamera()->size->x = level.size.x;
         GetCamera()->size->y = level.size.y;
+
+        // Remove all nodes that are not this map
+        GetLayer()->ClearNodes();
+        GetLayer()->AddNode(this);
 
         /// Load colliders
         colliders.clear();
@@ -85,8 +90,17 @@ public:
 
         auto &entities = GetAllEntities();
 
+        auto &playerEntity = GetEntity("player");
+        Node *player = CreateEntity(playerEntity);
+        player->SetEntityID(playerEntity.iid);
+        GetLayer()->AddNode(player);
+        player->OnCreate();
+
         for (auto &entity : entities)
         {
+            if (entity.getName() == "player")
+                continue;
+
             Node *node = CreateEntity(entity);
 
             if (node == nullptr)
@@ -230,7 +244,7 @@ public:
             const auto &level = getLevel();
 
             auto rect = tile.getTextureRect();
-            auto worldPos = tile.getWorldPosition();
+            auto worldPos = tile.getPosition();
 
             olc::vf2d pos = {static_cast<float>(worldPos.x), static_cast<float>(worldPos.y)};
             olc::vf2d tileSize = {static_cast<float>(rect.width), static_cast<float>(rect.height)};
@@ -279,6 +293,14 @@ public:
         auto &level = getLevel();
         auto &entitiesLayer = level.getLayer("entities");
         return entitiesLayer.allEntities();
+    }
+
+    const ldtk::Entity &GetEntity(std::string name)
+    {
+        auto &level = getLevel();
+        auto &entitiesLayer = level.getLayer("entities");
+        auto &entitiesByName = entitiesLayer.getEntitiesByName(name);
+        return entitiesByName[0];
     }
 
     bool getEnableUI()
@@ -332,6 +354,7 @@ public:
     void ClearDialogs()
     {
         dialogues.clear();
+        this->persist = false;
     }
 
     void AddDialog(std::string dialogue, bool persist = false)

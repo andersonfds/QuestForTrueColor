@@ -363,13 +363,24 @@ public:
     void CanEnableOther(Item *item) override
     {
         candidateItem = item;
+        if (items.size() > 0 && selectedSlot >= 0)
+        {
+            if (items[selectedSlot] == nullptr)
+            {
+                items[selectedSlot] = candidateItem;
+                candidateItem->OnActivate();
+            }
+        }
     }
 
     void OnInteract(float fElapsedTime) override
     {
-        if (items[selectedSlot] != nullptr)
+        if (items.size() > 0)
         {
-            items[selectedSlot]->OnInteract(fElapsedTime);
+            if (items[selectedSlot] != nullptr)
+            {
+                items[selectedSlot]->OnInteract(fElapsedTime);
+            }
         }
     }
 
@@ -570,17 +581,35 @@ class TeleportPoint : public Item
 private:
     float delta = 0.0f;
     olc::vf2d direction;
+    AnimationController *portal;
+    bool enabled = false;
+    std::string targetLevel;
 
 public:
     void OnCreate() override
     {
         Item::OnCreate();
         delta = 0.0f;
+        portal = new AnimationController(this, 0.4f, 0, {0, 1, 0, 1});
+    }
+
+    void Enable()
+    {
+        enabled = true;
+    }
+    
+    void OnEntityDefined(const ldtk::Entity &entity) override
+    {
+        Item::OnEntityDefined(entity);
+        enabled = entity.getField<ldtk::FieldType::Bool>("enabled").value_or(false);
+        targetLevel = entity.getField<ldtk::FieldType::String>("level").value_or("");
     }
 
     void OnScreen(float fElapsedTime) override
     {
+
         Map *map = GetLayer()->GetNode<Map>();
+        Camera *camera = GetLayer()->GetCamera();
         Player *player = GetLayer()->GetNode<Player>();
         olc::vf2d displayPosition = *this->position;
         olc::vf2d scale = {1.0f, 1.0f};
@@ -591,8 +620,17 @@ public:
         auto playerCollider = player->GetCollider();
         overlapsPlayer = overlaps(*playerCollider, GetCollider());
 
-        position->x = ((int)displayPosition.x + 16) / 32 * 32;
-        position->y = ((int)displayPosition.y + 16) / 32 * 32;
+        auto frame = portal->GetFrame(fElapsedTime);
+
+        if (enabled)
+        {
+            if (overlapsPlayer)
+            {
+                map->SetActiveLevel(targetLevel);
+                GetLayer()->RemoveNode(this);
+            }
+            map->DrawTile(displayPosition, portal->tilesetId, frame, {32.0f, 32.0f}, scale, true);
+        }
 
         if (DEBUG)
             GetEngine()->DrawRectDecal(displayPosition, {32.0f, 32.0f}, olc::WHITE);
