@@ -1,10 +1,14 @@
 
+#define OLC_SOUNDWAVE
 #define OLC_PGE_APPLICATION
 #define OLC_IGNORE_VEC2D
 #define TARGET_PHYSICS_PROCESS 60
 
 #include <cassert>
 #include <iostream>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_mixer.h>
+#include <audio.h>
 #include <olcUTIL_Geometry2D.h>
 #include <olcPixelGameEngine.h>
 #include <LDtkLoader/Project.hpp>

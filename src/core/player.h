@@ -75,6 +75,14 @@ private:
     AnimationController *jump;
     AnimationController *fall;
     AnimationController *dead;
+
+    Sound *gameOverSound;
+    Sound *damageSound;
+    Sound *coinUpSound;
+    Sound *coinDownSound;
+    Sound *liveUpSound;
+    Sound *flagPutSound;
+
     bool hasFlower = false;
     Item *canActivateItem;
     olc::vf2d *lastCheckpoint;
@@ -143,6 +151,14 @@ public:
         collider = new rect<float>(*position, {static_cast<float>(width), static_cast<float>(height)});
         lives = 3;
         money = 0;
+
+        gameOverSound = new Sound("assets/sfx/game_over.wav", 1);
+        damageSound = new Sound("assets/sfx/damage.wav", 2);
+        coinUpSound = new Sound("assets/sfx/coin_up.wav", 1);
+        coinDownSound = new Sound("assets/sfx/coin_down.wav", 1);
+        liveUpSound = new Sound("assets/sfx/live_up.wav", 1);
+        flagPutSound = new Sound("assets/sfx/flag_put.wav", 3);
+        LoadMusic("assets/sfx/huperboloid.wav", 0.1f);
     }
 
     void OnPhysicsProcess(float fElapsedTime)
@@ -367,6 +383,7 @@ public:
         {
             GetEngine()->DrawStringDecal({10, 10}, "Game Over", olc::WHITE, {2, 2});
             GetEngine()->DrawStringDecal({10, 50}, "Press ESC to restart", olc::WHITE, {2, 2});
+            gameOverSound->Play();
             enableControls = false;
         }
 
@@ -403,6 +420,11 @@ public:
         {
             money = 0;
             lives++;
+            liveUpSound->Play(false, true);
+        }
+        else
+        {
+            coinUpSound->Play(false, true);
         }
     }
 
@@ -411,6 +433,7 @@ public:
         if (money <= 0)
         {
             lives -= amount;
+            damageSound->Play(false, true);
 
             if (lives <= 0)
             {
@@ -432,12 +455,17 @@ public:
         else
         {
             money = 0;
+            coinDownSound->Play(false, true);
         }
     }
 
     void SetCheckpoint(olc::vf2d checkpoint)
     {
-        *lastCheckpoint = checkpoint;
+        if (*lastCheckpoint != checkpoint)
+        {
+            *lastCheckpoint = checkpoint;
+            flagPutSound->Play(false, true);
+        }
     }
 
     bool IsDead()

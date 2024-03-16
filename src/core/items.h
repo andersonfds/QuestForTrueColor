@@ -39,6 +39,7 @@ private:
     float particleDelta = 0.0f;
     int particleTimes = 0;
     olc::vf2d direction = {1, 0};
+    Sound *sfx;
 
 public:
     void OnCreate() override
@@ -53,6 +54,7 @@ public:
         delta = 0.0f;
         particleTimes = 0;
         didSprayOnce = false;
+        sfx = new Sound("assets/sfx/spray.wav");
     }
 
     void OnScreen(float fElapsedTime) override
@@ -105,10 +107,13 @@ public:
         }
 
         if (render)
+        {
             map->DrawTile(displayPosition, tilesetId, *this->framePosition, {32.0f, 32.0f}, scale, true);
+        }
 
         if (isSpraying)
         {
+            bool livingParticles = false;
 
             for (auto &p : particles)
             {
@@ -119,6 +124,8 @@ public:
 
                 if (p.lifespan <= 0.0f)
                     continue;
+
+                livingParticles = true;
 
                 int draw = p.lifespan > 1.0f ? 0 : 1;
 
@@ -159,6 +166,12 @@ public:
     {
         isSpraying = true;
         didSprayOnce = true;
+
+        if (isFollowingPlayer && render)
+        {
+            sfx->SetPlayed(false);
+            sfx->Play();
+        }
 
         if (particleDelta > 0.2f || particleDelta == 0.0f)
         {
@@ -597,7 +610,7 @@ public:
     {
         enabled = true;
     }
-    
+
     void OnEntityDefined(const ldtk::Entity &entity) override
     {
         Item::OnEntityDefined(entity);
