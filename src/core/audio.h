@@ -27,6 +27,11 @@ void LoadMusic(std::string path, float volume = 0.5f)
     Mix_VolumeMusic(MIX_MAX_VOLUME * volume);
 }
 
+void StopMusic()
+{
+    Mix_HaltMusic();
+}
+
 void ClearMusic()
 {
     Mix_HaltMusic();
@@ -96,11 +101,11 @@ public:
             return;
         }
 
-        if (IsPlaying(channel) && !reset)
+        if (IsPlaying() && !reset)
         {
             return;
         }
-        else if (IsPlaying(channel) && reset)
+        else if (IsPlaying() && reset)
         {
             Stop();
         }
@@ -126,7 +131,7 @@ public:
         Mix_Volume(channel, playVolume);
     }
 
-    bool IsPlaying(int channel)
+    bool IsPlaying()
     {
         return Mix_Playing(channel);
     }

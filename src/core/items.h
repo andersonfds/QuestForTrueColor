@@ -143,7 +143,7 @@ public:
             displayPosition.x += 16.0f;
             GetEngine()->DrawStringDecal(displayPosition, text, olc::WHITE);
         }
-        else if (isFollowingPlayer && !didSprayOnce)
+        else if (isFollowingPlayer && !didSprayOnce && render)
         {
             auto text = "Press Z to spray";
             auto textSize = GetEngine()->GetTextSize(text) * 0.5f;

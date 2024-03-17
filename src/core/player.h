@@ -82,10 +82,15 @@ private:
     Sound *coinDownSound;
     Sound *liveUpSound;
     Sound *flagPutSound;
+    Sound *jumpSound;
+    Sound *walkSound;
 
     bool hasFlower = false;
     Item *canActivateItem;
+    float deltaDamage = 0.0f;
+    bool animateDamage;
     olc::vf2d *lastCheckpoint;
+    bool render;
 
     olc::vf2d *position;
     olc::vf2d *velocity;
@@ -151,13 +156,17 @@ public:
         collider = new rect<float>(*position, {static_cast<float>(width), static_cast<float>(height)});
         lives = 3;
         money = 0;
+        render = true;
+        animateDamage = true;
 
         gameOverSound = new Sound("assets/sfx/game_over.wav", 1);
         damageSound = new Sound("assets/sfx/damage.wav", 2);
-        coinUpSound = new Sound("assets/sfx/coin_up.wav", 1);
+        coinUpSound = new Sound("assets/sfx/coin_up.wav", 3);
         coinDownSound = new Sound("assets/sfx/coin_down.wav", 1);
         liveUpSound = new Sound("assets/sfx/live_up.wav", 1);
         flagPutSound = new Sound("assets/sfx/flag_put.wav", 3);
+        jumpSound = new Sound("assets/sfx/jump.wav", 1);
+        walkSound = new Sound("assets/sfx/walk.wav", 1);
         LoadMusic("assets/sfx/huperboloid.wav", 0.1f);
     }
 
@@ -190,9 +199,22 @@ public:
             acceleration->y = 0;
         }
 
+        auto upRayIntersections = map->IsColliding(upRay, height / 2);
+        bool isFacingCeiling = upRayIntersections.size() > 0;
+
         if (GetEngine()->GetKey(olc::Key::UP).bHeld && canJump && enableControls)
         {
-            velocity->y = -200;
+            if (isFacingCeiling)
+            {
+                velocity->y = 0;
+                position->y = upRayIntersections[0].y + 32;
+            }
+            else
+            {
+                velocity->y = -200;
+                jumpSound->SetPlayed(false);
+                jumpSound->Play(false, true);
+            }
             canJump = false;
             isJumping = true;
         }
@@ -223,6 +245,15 @@ public:
             isTryingToMove = false;
         }
 
+        if (!walkSound->IsPlaying())
+        {
+            walkSound->SetPlayed(false);
+        }
+        if (isTryingToMove && velocity->y == 0)
+        {
+            walkSound->Play(false, false);
+        }
+
         if (didActivateItem && canActivateItem != nullptr && enableControls && GetEngine()->GetKey(olc::Key::Z).bHeld)
         {
             canActivateItem->OnInteract(fElapsedTime);
@@ -233,14 +264,32 @@ public:
         }
 
         *position += *velocity * fElapsedTime;
+
         downRay->origin = *position;
         downRay->origin.x += 16;
         downRay->origin.y += 16;
+
         facingRay->origin = *position;
         facingRay->origin.x += 16;
         facingRay->origin.y += 30;
+
         facingRay->direction = isFacingRight ? olc::vf2d(1, 0) : olc::vf2d(-1, 0);
-        collider->pos = *position + olc::vf2d(width / 2, 0);
+        collider->pos = *position + olc::vf2d(width * 0.5, 0);
+
+        upRay->origin = *position;
+        upRay->origin.x += 16;
+        upRay->origin.y += 16;
+
+        if (animateDamage)
+        {
+            deltaDamage += fElapsedTime;
+
+            if (deltaDamage >= 2.4f)
+            {
+                deltaDamage = 0.0f;
+                animateDamage = false;
+            }
+        }
     }
 
     bool IsFacingRight()
@@ -332,8 +381,19 @@ public:
             drawPos.x += 32;
         }
 
+        if (animateDamage)
+        {
+            int deltaDamageInt = static_cast<int>(deltaDamage * 10);
+            render = deltaDamageInt % 2 == 0;
+        }
+        else
+        {
+            render = true;
+        }
+
         auto frame = animation->GetFrame(fElapsedTime);
-        map->DrawTile(drawPos, animation->tilesetId, frame, {32.0f, 32.0f}, scale);
+        if (render)
+            map->DrawTile(drawPos, animation->tilesetId, frame, {32.0f, 32.0f}, scale);
 
         if (canActivateItem != nullptr && GetEngine()->GetKey(olc::Key::SPACE).bPressed && enableControls && !map->HasDialogs())
         {
@@ -377,12 +437,24 @@ public:
             downRayDirection += downRayOrigin;
 
             GetEngine()->DrawLineDecal(downRayOrigin, downRayDirection, olc::YELLOW);
+
+            // draw up ray
+            olc::vf2d upRayOrigin = upRay->origin;
+            olc::vf2d upRayDirection = upRay->direction;
+
+            camera->WorldToScreen(upRayOrigin);
+
+            upRayDirection *= 32;
+            upRayDirection += upRayOrigin;
+
+            GetEngine()->DrawLineDecal(upRayOrigin, upRayDirection, olc::DARK_BLUE);
         }
 
         if (lives <= 0)
         {
             GetEngine()->DrawStringDecal({10, 10}, "Game Over", olc::WHITE, {2, 2});
             GetEngine()->DrawStringDecal({10, 50}, "Press ESC to restart", olc::WHITE, {2, 2});
+            StopMusic();
             gameOverSound->Play();
             enableControls = false;
         }
@@ -430,6 +502,13 @@ public:
 
     void TakeDamage(int amount)
     {
+        if (lives <= 0 || animateDamage)
+        {
+            return;
+        }
+
+        animateDamage = true;
+
         if (money <= 0)
         {
             lives -= amount;
