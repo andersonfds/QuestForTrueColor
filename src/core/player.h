@@ -513,6 +513,7 @@ public:
         {
             lives -= amount;
             damageSound->Play(false, true);
+            velocity->y = 0; // prevent gravity from affecting the player for a short period of time
 
             if (lives <= 0)
             {

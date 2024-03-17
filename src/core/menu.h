@@ -6,7 +6,7 @@ enum GameOption
 {
     PLAYGROUND,
     NEW_GAME,
-    CREDITS
+    CREDITS,
 };
 
 class MainMenu : public Node
@@ -14,7 +14,7 @@ class MainMenu : public Node
 private:
     std::map<GameOption, std::string> options;
     olc::Pixel unselectedColor = olc::Pixel(255, 255, 255, 100);
-    GameOption selectedOption = GameOption::PLAYGROUND;
+    GameOption selectedOption = GameOption::NEW_GAME;
     Layer *gameLayer;
 
 public:
@@ -26,7 +26,9 @@ public:
     void OnCreate() override
     {
         options.clear();
-        options[GameOption::PLAYGROUND] = "Playground";
+
+        if (DEBUG)
+            options[GameOption::PLAYGROUND] = "Playground";
         options[GameOption::NEW_GAME] = "New Game";
         options[GameOption::CREDITS] = "Credits";
     }
@@ -40,14 +42,22 @@ public:
             Map *map = new Map();
             gameLayer->AddNode(map);
             gameLayer->OnCreate();
-            SetLevel("level_1");
+            SetLevel("level_2");
             gameLayer->RemoveNode(this);
 
             break;
         }
 
         case GameOption::NEW_GAME:
+        {
+            Map *map = new Map();
+            gameLayer->AddNode(map);
+            gameLayer->OnCreate();
+            SetLevel("level_1");
+            gameLayer->RemoveNode(this);
             break;
+        }
+
         case GameOption::CREDITS:
             break;
         }
@@ -64,25 +74,57 @@ public:
         GetEngine()->Clear(olc::VERY_DARK_BLUE);
         GetEngine()->DrawString(10, 10, "Quest for True Color", olc::WHITE, 2);
         int y = 50;
-
-        if (GetEngine()->GetKey(olc::Key::UP).bPressed)
-        {
-            selectedOption = static_cast<GameOption>((static_cast<int>(selectedOption) - 1) % options.size());
-        }
-        else if (GetEngine()->GetKey(olc::Key::DOWN).bPressed)
-        {
-            selectedOption = static_cast<GameOption>((static_cast<int>(selectedOption) + 1) % options.size());
-        }
-        else if (GetEngine()->GetKey(olc::Key::ENTER).bPressed)
-        {
-            OnOptionSelected(selectedOption);
-        }
+        std::string selectedOptionText = "";
 
         for (auto option : options)
         {
-            olc::Pixel color = selectedOption == option.first ? olc::WHITE : unselectedColor;
+            bool isSelected = selectedOption == option.first;
+            olc::Pixel color = isSelected ? olc::WHITE : unselectedColor;
             GetEngine()->DrawString(10, y, option.second, color, 2);
             y += 20;
+
+            if (isSelected)
+            {
+                selectedOptionText = option.second;
+            }
+        }
+
+        int selectedOptionIndex = 0;
+        for (auto option : options)
+        {
+            if (option.second == selectedOptionText)
+            {
+                break;
+            }
+            selectedOptionIndex++;
+        }
+
+        // iterate through the options when keyboard up or down is pressed
+        // and set the selected option
+        if (GetEngine()->GetKey(olc::Key::DOWN).bPressed)
+        {
+            selectedOptionIndex++;
+            if (selectedOptionIndex >= options.size())
+            {
+                selectedOptionIndex = 0;
+            }
+        }
+        else if (GetEngine()->GetKey(olc::Key::UP).bPressed)
+        {
+            selectedOptionIndex--;
+            if (selectedOptionIndex < 0)
+            {
+                selectedOptionIndex = options.size() - 1;
+            }
+        }
+
+        auto it = options.begin();
+        std::advance(it, selectedOptionIndex);
+        selectedOption = it->first;
+
+        if (GetEngine()->GetKey(olc::Key::ENTER).bPressed)
+        {
+            OnOptionSelected(selectedOption);
         }
     }
 };
