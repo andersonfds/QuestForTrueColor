@@ -273,6 +273,23 @@ public:
         return nullptr;
     }
 
+    template <typename T>
+    std::vector<T *> GetNodes()
+    {
+        std::vector<T *> result;
+
+        for (auto node : nodes)
+        {
+            T *t = dynamic_cast<T *>(node);
+            if (t)
+            {
+                result.push_back(t);
+            }
+        }
+
+        return result;
+    }
+
 private:
     std::vector<Node *> nodes;
     olc::PixelGameEngine *pge;

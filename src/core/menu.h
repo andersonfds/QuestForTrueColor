@@ -26,6 +26,7 @@ public:
     void OnCreate() override
     {
         options.clear();
+        StopMusic();
 
         if (DEBUG)
             options[GameOption::PLAYGROUND] = "Playground";

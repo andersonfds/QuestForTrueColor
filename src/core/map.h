@@ -364,7 +364,35 @@ public:
             this->persist = true;
         }
 
-        dialogues.push_back(dialogue);
+        // algorithm to break words if the paragraph (delimited by \n) is greater than 74 characters
+        std::string paragraph = dialogue;
+        std::string word = "";
+        std::string newParagraph = "";
+        int lineLength = 0;
+        
+        for (int i = 0; i < paragraph.length(); i++)
+        {
+            if (paragraph[i] == ' ' || paragraph[i] == '\n')
+            {
+                if (lineLength + word.length() > 74)
+                {
+                    newParagraph += "\n";
+                    lineLength = 0;
+                }
+                newParagraph += word;
+                lineLength += word.length();
+                word = "";
+            }
+            word += paragraph[i];
+        }
+
+        if (lineLength + word.length() > 74)
+        {
+            newParagraph += "\n";
+        }
+
+        newParagraph += word;
+        dialogues.push_back(newParagraph);
     }
 
     bool HasDialogs()

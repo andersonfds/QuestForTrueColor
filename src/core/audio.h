@@ -2,14 +2,6 @@
 
 void LoadMusic(std::string path, float volume = 0.5f)
 {
-    if (SDL_Init(SDL_INIT_AUDIO) < 0)
-    {
-        std::cout << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
-        return;
-    }
-
-    std::cout << "SDL initialized" << std::endl;
-
     if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 1024) < 0)
     {
         std::cout << "SDL_mixer could not initialize! SDL_mixer Error: " << Mix_GetError() << std::endl;
@@ -40,14 +32,6 @@ void ClearMusic()
 
 Mix_Chunk *LoadSfx(std::string path)
 {
-    if (SDL_Init(SDL_INIT_AUDIO) < 0)
-    {
-        std::cout << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
-        return NULL;
-    }
-
-    std::cout << "SDL initialized" << std::endl;
-
     if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 1024) < 0)
     {
         std::cout << "SDL_mixer could not initialize! SDL_mixer Error: " << Mix_GetError() << std::endl;

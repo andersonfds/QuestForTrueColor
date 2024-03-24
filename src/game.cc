@@ -17,7 +17,6 @@
 #include "core/animation.h"
 #include "core/player.h"
 #include "core/items.h"
-#include "core/bee.h"
 #include "core/menu.h"
 #include "core/coin.h"
 #include "core/anderson.h"
@@ -52,6 +51,9 @@ Node *CreateEntity(const ldtk::Entity &entity)
 
     if (name == "portal")
         return new TeleportPoint();
+
+    if (name == "erik")
+        return new Erik();
 
     return nullptr;
 }

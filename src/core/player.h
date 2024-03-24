@@ -370,6 +370,7 @@ public:
 
         if (!camera->IsOnScreen(*position))
         {
+            money = 0; // instant hearth loss if player is off screen
             TakeDamage(1);
         }
 
@@ -490,7 +491,7 @@ public:
 
         if (money >= 10)
         {
-            money = 0;
+            money = money % 10;
             lives++;
             liveUpSound->Play(false, true);
         }
