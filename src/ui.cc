@@ -2,7 +2,6 @@
 class UINode : public CoreNode
 {
 private:
-    PlayerNode *player;
     AssetOptions *options;
     AssetOptions *slotOptions;
     float coinDeltaTime = 0.0f;
@@ -13,7 +12,7 @@ public:
     {
     }
 
-    ~UINode()
+    ~UINode() override
     {
         delete options;
         delete slotOptions;
@@ -163,11 +162,6 @@ private:
 
     PlayerNode *getPlayer()
     {
-        if (player == nullptr)
-        {
-            player = game->getChild<PlayerNode>();
-        }
-
-        return player;
+        return game->getChild<PlayerNode>();
     }
 };

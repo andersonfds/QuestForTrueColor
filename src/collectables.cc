@@ -24,7 +24,7 @@ public:
         thumbnail = new AssetOptions({}, assetDrawPosition, {1, 1}, {SPRITE_SIZE, SPRITE_SIZE});
     }
 
-    ~Collectable()
+    ~Collectable() override
     {
         delete assetProvider;
     }
@@ -212,6 +212,7 @@ public:
         this->game->addDialog({"Now you can store stuff in your tiny purse", 2.0f});
     }
 };
+REGISTER_NODE_TYPE(TinyPurseNode, "purse")
 
 #pragma endregion
 
@@ -354,6 +355,7 @@ private:
         return aliveParticles;
     }
 };
+REGISTER_NODE_TYPE(BugSprayNode, "bug_spray")
 
 #pragma endregion
 
@@ -372,7 +374,7 @@ public:
         autoCollect = true;
     }
 
-    ~CoinNode()
+    ~CoinNode() override
     {
         delete coinUpSfx;
     }
@@ -398,5 +400,20 @@ public:
         coinUpSfx->Play(false, true);
     }
 };
+REGISTER_NODE_TYPE(CoinNode, "coin")
+
+#pragma endregion
+
+#pragma region Flower
+
+class FlowerNode : public Collectable
+{
+public:
+    FlowerNode(const ldtk::Entity &entity, GameNode *game) : Collectable(entity, game)
+    {
+        hintText = "Unknown Flower";
+    }
+};
+REGISTER_NODE_TYPE(FlowerNode, "flower")
 
 #pragma endregion

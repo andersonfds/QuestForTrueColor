@@ -111,6 +111,12 @@ public:
     {
     }
 
+    virtual ~CoreNode()
+    {
+        for (auto child : children)
+            delete child;
+    }
+
     bool empty() const
     {
         return children.empty();

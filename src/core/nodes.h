@@ -38,6 +38,17 @@ public:
         this->uiNode = uiNode;
     }
 
+    ~GameNode() override
+    {
+        delete camera;
+        delete spritesProvider;
+        delete backgroundProvider;
+        for (auto &collider : colliders)
+        {
+            delete collider;
+        }
+    }
+
     const ldtk::Enum &getGameEnum(const std::string &name)
     {
         return project.getWorld().getEnum(name);
@@ -316,17 +327,6 @@ public:
         }
 
         return nullptr;
-    }
-
-    ~GameNode()
-    {
-        delete camera;
-        delete spritesProvider;
-        delete backgroundProvider;
-        for (auto &collider : colliders)
-        {
-            delete collider;
-        }
     }
 
 private:

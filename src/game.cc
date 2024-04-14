@@ -20,6 +20,7 @@
 #include "core/core.h"
 #include "core/ui.h"
 #include "core/nodes.h"
+#include "registry.h"
 #include "menu.cc"
 #include "entities.cc"
 #include "player.cc"
@@ -28,21 +29,8 @@
 
 CoreNode *CreateNode(GameNode *game, const ldtk::Entity &entity)
 {
-    const std::string &name = entity.getName();
-
-    if (name == "player")
-        return new PlayerNode(entity, game);
-
-    if (name == "purse")
-        return new TinyPurseNode(entity, game);
-
-    if (name == "bug_spray")
-        return new BugSprayNode(entity, game);
-
-    if (name == "coin")
-        return new CoinNode(entity, game);
-
-    return nullptr;
+    auto type = entity.getName();
+    return CoreNodeFactory::get().createNode(type, entity, game);
 }
 
 class QuestForTrueColor : public olc::PixelGameEngine

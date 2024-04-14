@@ -15,12 +15,18 @@ private:
     uint8_t lives = 3;
     uint8_t money = 0;
     uint8_t storage = 0;
-    uint8_t selectedIndex = 0;
+    int selectedIndex = -1;
     CoreNode *child = nullptr;
 
 public:
     PlayerNode(const ldtk::Entity &entity, GameNode *game) : EntityNode(entity, game)
     {
+    }
+
+    ~PlayerNode() override
+    {
+        delete playerCollider;
+        delete animations;
     }
 
     uint8_t getLives()
@@ -43,7 +49,7 @@ public:
         return children.size() >= storage;
     }
 
-    uint8_t getSelectedIndex()
+    int getSelectedIndex()
     {
         return selectedIndex;
     }
@@ -64,21 +70,14 @@ public:
         money += amount;
     }
 
-    ~PlayerNode()
-    {
-        delete playerCollider;
-        delete animations;
-    }
-
     bool addChild(CoreNode *node) override
     {
         if (EntityNode::addChild(node))
         {
-            if (children.size() == 1)
-            {
-                selectedIndex = 0;
-                child = node;
-            }
+            // Updating the selectedIndex to be the last added child
+            selectedIndex = children.size() - 1;
+            child = node;
+
             return true;
         }
 
@@ -113,7 +112,7 @@ public:
     {
         if (camera->IsOfflimits(position))
         {
-            onInstantDeath();
+            onTakeDamage();
             return;
         }
 
@@ -256,17 +255,28 @@ public:
         if (children.empty())
             return;
 
-        auto *child = children[0];
-        child->position = position;
-        moveChildToRoot(child, game);
+        if (child != nullptr)
+        {
+            child->position = position;
+            moveChildToRoot(child, game);
+            child = nullptr;
+            selectedIndex = -1;
+        }
     }
 
     void onTakeDamage()
     {
         lives--;
+
         if (lives <= 0)
         {
             onInstantDeath();
+        }
+        else
+        {
+            position = checkpoint;
+            velocity = {0, 0};
+            acceleration = {0, 0};
         }
     }
 
@@ -384,3 +394,4 @@ public:
         }
     }
 };
+REGISTER_NODE_TYPE(PlayerNode, "player")
