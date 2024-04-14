@@ -9,22 +9,6 @@ olc::vf2d RotateVector(const olc::vf2d &vec, float angle)
     return {vec.x * cosA - vec.y * sinA, vec.x * sinA + vec.y * cosA};
 }
 
-class Particle
-{
-public:
-    olc::vf2d position;
-    olc::vf2d velocity;
-    float lifespan;
-
-    Particle(olc::vf2d startPos, olc::vf2d startVel, float life) : position(startPos), velocity(startVel), lifespan(life) {}
-
-    // Update the particle's position and lifespan
-    void Update(float fElapsedTime)
-    {
-        position += velocity * fElapsedTime;
-        lifespan -= fElapsedTime;
-    }
-};
 
 class BugSpray : public Item
 {
@@ -639,7 +623,7 @@ public:
         {
             if (overlapsPlayer)
             {
-                map->SetActiveLevel(targetLevel);
+                map->SetActiveLevel(targetLevel, "");
                 GetLayer()->RemoveNode(this);
             }
             map->DrawTile(displayPosition, portal->tilesetId, frame, {32.0f, 32.0f}, scale, true);
@@ -801,10 +785,32 @@ public:
     }
 };
 
-class Erik : public Item
+class Character : public Item
 {
 private:
-    AnimationController *idleErik;
+    AnimationController *controller;
+
+protected:
+    void SetAnimationController(AnimationController *controller)
+    {
+        this->controller = controller;
+    }
+
+public:
+    void OnScreen(float fElapsedTime) override
+    {
+        Map *map = GetLayer()->GetNode<Map>();
+        olc::vf2d displayPosition = *this->position;
+        olc::vf2d scale = {1.0f, 1.0f};
+        displayPosition.y += 5.0f;
+        auto frame = controller->GetFrame(fElapsedTime);
+        map->DrawTile(displayPosition, controller->tilesetId, frame, {32.0f, 32.0f}, scale, true);
+    }
+};
+
+class Erik : public Character
+{
+private:
     bool didFinishQuest = false;
     bool didInteract = false;
     bool didFinishTalking = false;
@@ -815,7 +821,7 @@ public:
     void OnEntityDefined(const ldtk::Entity &entity) override
     {
         Item::OnEntityDefined(entity);
-        idleErik = new AnimationController(this, 0.4f, 0, {0, 1, 0, 1});
+        SetAnimationController(new AnimationController(this, 0.4f, 0, {0, 1, 0, 1}));
     }
 
     void OnScreen(float fElapsedTime) override
@@ -868,11 +874,7 @@ public:
             portal->Enable();
         }
 
-        auto position = *this->position;
-        position.y += 5.0f;
-        olc::vf2d scale = {1.0f, 1.0f};
-        auto frame = idleErik->GetFrame(fElapsedTime);
-        map->DrawTile(position, tilesetId, frame, {32.0f, 32.0f}, scale, true);
+        Character::OnScreen(fElapsedTime);
     }
 
 private:

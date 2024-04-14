@@ -21,6 +21,7 @@ private:
     olc::vf2d *uiCoords;
     olc::Decal *background;
     std::vector<std::string> dialogues;
+    std::string fullscreenDialog;
     float dialogTime = 0.0f;
     bool persist = false;
 
@@ -37,13 +38,14 @@ private:
     }
 
 public:
-    void SetActiveLevel(std::string levelName)
+    void SetActiveLevel(std::string levelName, std::string dialog)
     {
         this->levelName = levelName;
         auto &level = getLevel();
         bgColor = olc::Pixel(level.bg_color.r, level.bg_color.g, level.bg_color.b);
         colliders = std::vector<rect<float>>();
         ClearDialogs();
+        fullscreenDialog = dialog;
 
         if (level.hasBgImage())
         {
@@ -179,6 +181,18 @@ public:
 
     void OnProcess(float fElapsedTime) override
     {
+        if (fullscreenDialog != "")
+        {
+            if (GetEngine()->GetKey(olc::Key::SPACE).bPressed)
+            {
+                fullscreenDialog = "";
+            }
+
+            GetEngine()->FillRectDecal({0, 0}, {static_cast<float>(GetEngine()->ScreenWidth()), static_cast<float>(GetEngine()->ScreenHeight())}, olc::Pixel(0, 0, 0, 200));
+            GetEngine()->DrawStringDecal({10, 10}, fullscreenDialog, olc::WHITE);
+            return;
+        }
+
         Camera *camera = GetCamera();
         const auto &level = getLevel();
 
@@ -355,6 +369,7 @@ public:
     {
         dialogues.clear();
         this->persist = false;
+        fullscreenDialog = "";
     }
 
     void AddDialog(std::string dialogue, bool persist = false)
@@ -369,7 +384,7 @@ public:
         std::string word = "";
         std::string newParagraph = "";
         int lineLength = 0;
-        
+
         for (int i = 0; i < paragraph.length(); i++)
         {
             if (paragraph[i] == ' ' || paragraph[i] == '\n')

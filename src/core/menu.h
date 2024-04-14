@@ -43,7 +43,7 @@ public:
             Map *map = new Map();
             gameLayer->AddNode(map);
             gameLayer->OnCreate();
-            SetLevel("level_2");
+            SetLevel("level_2", "Act 2. The Beginning");
             gameLayer->RemoveNode(this);
 
             break;
@@ -54,7 +54,7 @@ public:
             Map *map = new Map();
             gameLayer->AddNode(map);
             gameLayer->OnCreate();
-            SetLevel("level_1");
+            SetLevel("level_1", "Act 1. The Beginning");
             gameLayer->RemoveNode(this);
             break;
         }
@@ -64,10 +64,10 @@ public:
         }
     }
 
-    void SetLevel(std::string level)
+    void SetLevel(std::string level, std::string message)
     {
         Map *map = gameLayer->GetNode<Map>();
-        map->SetActiveLevel(level);
+        map->SetActiveLevel(level, message);
     }
 
     void OnProcess(float fElapsedTime) override

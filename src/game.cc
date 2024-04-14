@@ -3,8 +3,12 @@
 #define OLC_PGE_APPLICATION
 #define OLC_IGNORE_VEC2D
 #define TARGET_PHYSICS_PROCESS 60
+#define USE_PIXEL_GAME_ENGINE
+#define PREFER_DECAL
+#define SPRITE_SIZE 32
 
 #include <cassert>
+#include <stack>
 #include <iostream>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_mixer.h>
@@ -12,48 +16,31 @@
 #include <olcUTIL_Geometry2D.h>
 #include <olcPixelGameEngine.h>
 #include <LDtkLoader/Project.hpp>
-#include "core/renderer.h"
-#include "core/map.h"
-#include "core/animation.h"
-#include "core/player.h"
-#include "core/items.h"
-#include "core/menu.h"
-#include "core/coin.h"
-#include "core/anderson.h"
+#include "core/audio.h"
+#include "core/core.h"
+#include "core/ui.h"
+#include "core/nodes.h"
+#include "menu.cc"
+#include "entities.cc"
+#include "player.cc"
+#include "collectables.cc"
+#include "ui.cc"
 
-Node *CreateEntity(const ldtk::Entity &entity)
+CoreNode *CreateNode(GameNode *game, const ldtk::Entity &entity)
 {
-    std::string name = entity.getName();
+    const std::string &name = entity.getName();
 
     if (name == "player")
-        return new Player();
-
-    if (name == "coin")
-        return new Coin();
-
-    if (name == "bee")
-        return new Bee();
-
-    if (name == "bug_spray")
-        return new BugSpray();
+        return new PlayerNode(entity, game);
 
     if (name == "purse")
-        return new Purse();
+        return new TinyPurseNode(entity, game);
 
-    if (name == "checkpoint")
-        return new Checkpoint();
+    if (name == "bug_spray")
+        return new BugSprayNode(entity, game);
 
-    if (name == "anderson")
-        return new Anderson();
-
-    if (name == "flower")
-        return new Flower();
-
-    if (name == "portal")
-        return new TeleportPoint();
-
-    if (name == "erik")
-        return new Erik();
+    if (name == "coin")
+        return new CoinNode(entity, game);
 
     return nullptr;
 }
@@ -61,8 +48,18 @@ Node *CreateEntity(const ldtk::Entity &entity)
 class QuestForTrueColor : public olc::PixelGameEngine
 {
 private:
-    float fDeltaTime = 0.0f;
-    Layer *gameLayer;
+    GameNode *gameNode;
+    MenuNode *menuNode;
+
+    bool paused = true;
+    bool didSkipFrame = false;
+
+    olc::HWButton upState;
+    olc::HWButton downState;
+    olc::HWButton leftState;
+    olc::HWButton rightState;
+    olc::HWButton enterState;
+    olc::HWButton escapeState;
 
 public:
     QuestForTrueColor()
@@ -71,47 +68,134 @@ public:
 
     bool OnUserCreate() override
     {
-        gameLayer = new Layer("Game", this);
-        CreateMenu();
-        return true;
-    }
+        SetContext(this);
+        paused = true;
 
-    void CreateMenu()
-    {
-        MainMenu *menu = new MainMenu(gameLayer);
-        gameLayer->AddNode(menu);
-        gameLayer->OnCreate();
+        auto *uiNode = new UINode(nullptr);
+        menuNode = new MenuNode();
+        gameNode = new GameNode(uiNode);
+        uiNode->game = gameNode;
+
+        menuNode->game = gameNode;
+        gameNode->onCreated();
+        menuNode->onCreated();
+
+        return true;
     }
 
     bool OnUserUpdate(float fElapsedTime) override
     {
-        fDeltaTime += fElapsedTime;
-
-        if (GetKey(olc::Key::ESCAPE).bPressed)
+        if (fElapsedTime > 0.1f)
         {
-            OnUserCreate();
-            return true;
+            didSkipFrame = true;
+            updateKeyStates();
+            fElapsedTime = 0.0;
         }
 
-        if (GetKey(olc::Key::TAB).bPressed)
+        if (!didSkipFrame)
         {
-            DEBUG = !DEBUG;
+            updateKeyStates();
         }
 
-        if (fDeltaTime >= 1.0f / TARGET_PHYSICS_PROCESS)
+        if (escapeState.bPressed)
         {
-            gameLayer->PhysicsProcess(fDeltaTime);
-            fDeltaTime -= 1.0f / TARGET_PHYSICS_PROCESS;
+            if (menuNode->canContinueGame())
+            {
+                paused = !paused;
+                menuNode->selectedOption = "Continue";
+            }
+            else
+            {
+                if (!paused)
+                {
+                    paused = true;
+                    menuNode->selectedOption = "New Game";
+                }
+            }
+        }
+        else if (paused)
+        {
+            if (upState.bPressed)
+            {
+                menuNode->onUp();
+            }
+            else if (downState.bPressed)
+            {
+                menuNode->onDown();
+            }
+            else if (enterState.bPressed)
+            {
+                if (menuNode->selectedOption == "Exit")
+                {
+                    return false;
+                }
+                else if (menuNode->selectedOption == "New Game")
+                {
+                    menuNode->canContinue = true;
+                    getGameNode(true);
+                }
+
+                paused = false;
+            }
+
+            menuNode->onUpdated(fElapsedTime);
+        }
+        else
+        {
+            auto *gameNode = getGameNode();
+
+            if (upState.bHeld)
+                gameNode->onUp();
+
+            if (downState.bHeld)
+                gameNode->onDown();
+
+            if (leftState.bHeld)
+                gameNode->onLeft();
+
+            if (rightState.bHeld)
+                gameNode->onRight();
+
+            if (enterState.bPressed)
+                gameNode->onEnter();
+
+            gameNode->onUpdated(fElapsedTime);
         }
 
-        gameLayer->Process(fElapsedTime);
+        didSkipFrame = false;
+        return true;
+    }
 
-        if (DEBUG)
-        {
-            std::string sFPS = "FPS: " + std::to_string(GetFPS());
-            DrawStringDecal({10, 10}, sFPS, olc::WHITE);
-        }
+    bool OnUserDestroy() override
+    {
+        delete menuNode;
+        delete gameNode;
 
         return true;
+    }
+
+    GameNode *getGameNode(bool recreate = false)
+    {
+        if (gameNode == nullptr)
+        {
+            return nullptr;
+        }
+
+        if (recreate)
+        {
+            gameNode->onCreated();
+        }
+
+        return gameNode;
+    }
+
+    void updateKeyStates()
+    {
+        upState = GetKey(olc::Key::UP);
+        downState = GetKey(olc::Key::DOWN);
+        leftState = GetKey(olc::Key::LEFT);
+        rightState = GetKey(olc::Key::RIGHT);
+        enterState = GetKey(olc::Key::SPACE);
+        escapeState = GetKey(olc::Key::ESCAPE);
     }
 };
