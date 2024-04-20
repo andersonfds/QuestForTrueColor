@@ -1,6 +1,320 @@
 #pragma once
 
+using namespace olc::utils::geom2d;
+
 class GameNode;
+class PlayerNode;
+
+#pragma region Camera
+
+struct Camera
+{
+    olc::vf2d size;
+    olc::vf2d position;
+    olc::vf2d offset;
+
+    float zoom;
+
+    Camera()
+    {
+        position = olc::vf2d();
+        size = olc::vf2d();
+        zoom = 1.000f;
+        offset = olc::vf2d();
+    }
+
+    void ScreenToWorld(olc::vf2d &screen)
+    {
+        auto position = GetPosition();
+        screen.x = screen.x / zoom + position.x;
+        screen.y = screen.y / zoom + position.y;
+
+        screen.x -= offset.x;
+        screen.y -= offset.y;
+    }
+
+    void WorldToScreen(olc::vf2d &world)
+    {
+        auto position = GetPosition();
+        world.x = (world.x - position.x) * zoom;
+        world.y = (world.y - position.y) * zoom;
+
+        world.x += offset.x;
+        world.y += offset.y;
+    }
+
+    bool IsOnScreen(olc::vf2d pos)
+    {
+        auto position = GetPosition();
+        olc::vf2d screenSize = {SCREEN_WIDTH, SCREEN_HEIGHT};
+
+        rect<float> cameraRect = rect<float>({position, screenSize});
+        rect<float> objectRect = rect<float>(pos, {16, 16});
+
+        // add some padding to the camera
+        cameraRect.pos.x -= 40;
+        cameraRect.pos.y -= 40;
+        cameraRect.size.x += 40;
+        cameraRect.size.y += 40;
+
+        // account for the offset
+        cameraRect.pos.x -= offset.x;
+        cameraRect.pos.y -= offset.y;
+
+        return overlaps(cameraRect, objectRect);
+    }
+
+    bool IsOnScreen(const ldtk::IntPoint &point)
+    {
+        olc::vf2d pos = {static_cast<float>(point.x), static_cast<float>(point.y)};
+        return IsOnScreen(pos);
+    }
+
+    olc::vf2d GetPosition()
+    {
+        olc::vf2d screenSize = {SCREEN_WIDTH, SCREEN_HEIGHT};
+        olc::vf2d halfScreenSize = screenSize * 0.5f;
+        olc::vf2d position = this->position;
+
+        position.x -= offset.x;
+        position.y -= offset.y;
+
+        position.x = std::max(0.0f, std::min(position.x, size.x - screenSize.x));
+        position.y = std::max(0.0f, std::min(position.y, size.y - screenSize.y));
+
+        position.x += halfScreenSize.x;
+        position.y += halfScreenSize.y;
+
+        return position;
+    }
+
+    bool IsOfflimits(olc::vf2d pos)
+    {
+        return pos.y > size.y;
+    }
+};
+
+#pragma endregion Camera
+
+#pragma region CoreNode
+
+class CoreNode
+{
+public:
+    std::string name;
+    olc::vf2d position;
+    GameNode *game = nullptr;
+    CoreNode *parent = nullptr;
+    std::vector<CoreNode *> children;
+    AssetOptions *thumbnail = nullptr;
+
+    CoreNode(const std::string &name, GameNode *game) : name(name), position({0, 0}), game(game)
+    {
+    }
+
+    virtual ~CoreNode()
+    {
+    }
+
+    bool empty() const
+    {
+        return children.empty();
+    }
+
+    virtual rect<float> getCollider()
+    {
+        return rect<float>(position, {SPRITE_SIZE, SPRITE_SIZE});
+    }
+
+    virtual bool addChild(CoreNode *node)
+    {
+        // check if child already exists
+        if (std::find(children.begin(), children.end(), node) != children.end())
+            return false;
+
+        children.push_back(node);
+        return true;
+    }
+
+    bool prependChild(CoreNode *node)
+    {
+        // check if child already exists
+        if (std::find(children.begin(), children.end(), node) != children.end())
+            return false;
+
+        children.insert(children.begin(), node);
+        return true;
+    }
+
+    void removeChild(CoreNode *node)
+    {
+        children.erase(std::remove(children.begin(), children.end(), node), children.end());
+    }
+
+    void moveChildrenToRoot(CoreNode *root)
+    {
+        reparentChildren(root, true);
+    }
+
+    void moveChildToRoot(CoreNode *child, CoreNode *root)
+    {
+        if (child->parent != this)
+            return;
+
+        child->parent = nullptr;
+        root->addChild(child);
+        child->onReparent();
+        removeChild(child);
+    }
+
+    void clearChildren()
+    {
+        children.clear();
+    }
+
+    void reparent(CoreNode *newParent)
+    {
+        if (parent)
+            parent->removeChild(this);
+
+        parent = newParent;
+        newParent->addChild(this);
+    }
+
+    template <typename T>
+    T *getChildOfType()
+    {
+        for (auto &child : children)
+        {
+            auto casted = dynamic_cast<T *>(child);
+            if (casted != nullptr)
+                return casted;
+        }
+
+        return nullptr;
+    }
+
+    virtual void onCreated()
+    {
+        clearChildren();
+    }
+
+    virtual void onUpdated(float fElapsedTime)
+    {
+        if (parent != nullptr)
+            position = parent->position;
+
+        for (auto child : children)
+            child->onUpdated(fElapsedTime);
+    }
+
+    template <typename T>
+    int getFirstIndexOfType()
+    {
+        for (int i = 0; i < children.size(); i++)
+        {
+            auto casted = dynamic_cast<T *>(children[i]);
+            if (casted != nullptr)
+                return i;
+        }
+
+        return -1;
+    }
+
+    virtual void onUp()
+    {
+    }
+
+    virtual void onDown()
+    {
+    }
+
+    virtual void onLeft()
+    {
+    }
+
+    virtual void onRight()
+    {
+    }
+
+    virtual void onEnter()
+    {
+    }
+
+    virtual void onReparent()
+    {
+    }
+
+private:
+    void reparentChildren(CoreNode *newParent, bool clearParent = false)
+    {
+        for (auto child : children)
+        {
+            child->parent = clearParent ? nullptr : newParent;
+            newParent->prependChild(child);
+            child->onReparent();
+        }
+
+        clearChildren();
+    }
+};
+
+#pragma endregion CoreNode
+
+#pragma region Iterator
+
+class CoreNodeIterator
+{
+private:
+    std::stack<CoreNode *> nodes;
+
+public:
+    CoreNodeIterator(CoreNode *root)
+    {
+        if (root)
+            nodes.push(root);
+    }
+
+    bool hasNext()
+    {
+        return !nodes.empty();
+    }
+
+    CoreNode *next()
+    {
+        if (nodes.empty())
+            return nullptr;
+
+        CoreNode *current = nodes.top();
+        nodes.pop();
+
+        for (auto it = current->children.rbegin(); it != current->children.rend(); ++it)
+        {
+            if (*it)
+                nodes.push(*it);
+        }
+
+        return current;
+    }
+};
+
+enum class HAlign
+{
+    Center,
+    Left,
+    Right,
+};
+
+enum class VAlign
+{
+    Center,
+    Top,
+    Bottom,
+};
+
+#pragma endregion Iterator
+
+#pragma region GameNode
 
 CoreNode *CreateNode(GameNode *node, const ldtk::Entity &entity);
 
@@ -24,10 +338,12 @@ private:
     std::vector<olc::utils::geom2d::rect<float> *> onScreenColliders;
     std::vector<Dialog> dialogs;
     std::map<std::string, bool> flags;
+    Sound *deadSound;
+    CoreNode *playerNode;
 
 public:
     bool isGameOver = false;
-    Camera *camera;
+    Camera camera;
     GameImageAssetProvider *spritesProvider;
     CoreNode *uiNode;
 
@@ -38,17 +354,6 @@ public:
         this->uiNode = uiNode;
     }
 
-    ~GameNode() override
-    {
-        delete camera;
-        delete spritesProvider;
-        delete backgroundProvider;
-        for (auto &collider : colliders)
-        {
-            delete collider;
-        }
-    }
-
     const ldtk::Enum &getGameEnum(const std::string &name)
     {
         return project.getWorld().getEnum(name);
@@ -57,14 +362,34 @@ public:
     void onCreated() override
     {
         CoreNode::onCreated();
-
-        camera = new Camera();
-        clearDialogs();
-        addDialog({"Developed by Anderson, with love and coffee <3", 3.0f, true, false});
-
-        colliders.clear();
+        selectedLevel = "level_1";
+        camera = Camera();
         project.loadFromFile("assets/map_project/QuestForTrueColor.ldtk");
         spritesProvider = new GameImageAssetProvider("assets/sprite_project/Sprites.png");
+        deadSound = new Sound("assets/sfx/game_over.wav", 1);
+        loadLevel(selectedLevel);
+        addDialog({"Developed by Anderson, with love and coffee <3", 3.0f, true, false});
+    }
+
+    void loadLevel(const std::string levelName)
+    {
+        auto &allLevels = project.getWorld().allLevels();
+        bool didFind = false;
+        for (auto &level : allLevels)
+            if (level.name == levelName)
+            {
+                didFind = true;
+                break;
+            }
+
+        if (!didFind)
+            return;
+
+        selectedLevel = levelName;
+        colliders.clear();
+        clearDialogs();
+        disableLevelPortal();
+        clearChildren();
         auto &world = project.getWorld();
         auto &level = world.getLevel(selectedLevel);
         auto &bgImage = level.getBgImage();
@@ -72,9 +397,10 @@ public:
         auto fullImagePath = "assets/map_project/" + std::string(bgImagePath);
         backgroundProvider = new GameImageAssetProvider(fullImagePath);
 
-        camera->size->x = level.size.x;
-        camera->size->y = level.size.y;
+        camera.size.x = level.size.x;
+        camera.size.y = level.size.y;
         isGameOver = false;
+        deadSound->SetPlayed(false);
 
         auto &collidersLayer = level.getLayer("colliders");
         for (int x = 0; x < collidersLayer.getGridSize().x; x++)
@@ -105,13 +431,12 @@ public:
                 continue;
 
             node->game = this;
-
             node->onCreated();
 
-            if (node->name != "player")
-                prependChild(node);
-            else
-                addChild(node);
+            if (node->name == "player")
+                playerNode = node;
+
+            addChild(node);
         }
 
         uiNode->onCreated();
@@ -208,7 +533,7 @@ public:
             auto rect = tile.getTextureRect();
             auto tileWorldPosition = tile.getPosition();
 
-            if (!camera->IsOnScreen(tileWorldPosition))
+            if (!camera.IsOnScreen(tileWorldPosition))
             {
                 skipped++;
                 continue;
@@ -216,7 +541,7 @@ public:
 
             auto *options = new AssetOptions();
             olc::vf2d itemPosition = {static_cast<float>(tileWorldPosition.x), static_cast<float>(tileWorldPosition.y)};
-            camera->WorldToScreen(itemPosition);
+            camera.WorldToScreen(itemPosition);
 
             options->position = itemPosition;
             options->offset = olc::vf2d{(float)rect.x, (float)rect.y};
@@ -225,13 +550,24 @@ public:
             Image(spritesProvider, options);
         }
 
-        CoreNode::onUpdated(fElapsedTime);
-        drawOverlayDialog(fElapsedTime);
+        // Drawing entities, player behind everything
+        if (playerNode != nullptr)
+            playerNode->onUpdated(fElapsedTime);
 
+        for (auto &child : children)
+        {
+            if (child == playerNode)
+                continue;
+
+            child->onUpdated(fElapsedTime);
+        }
+
+        drawOverlayDialog(fElapsedTime);
         if (isGameOver)
         {
             Text("Game Over", olc::WHITE, YAlign::MIDDLE, XAlign::CENTER, {2.0, 2.0});
             Text("Press ESC to restart", olc::WHITE, YAlign::MIDDLE, XAlign::CENTER, {1, 1}, {0, 20.0});
+            deadSound->Play(false, false);
         }
     }
 
@@ -258,6 +594,58 @@ public:
                 return;
 
         dialogs.push_back(dialog);
+    }
+
+    void enableLevelPortal()
+    {
+        this->setFlag("level_portal", true);
+    }
+
+    void disableLevelPortal()
+    {
+        this->setFlag("level_portal", false);
+    }
+
+    bool isLevelPortalEnabled()
+    {
+        return this->getFlag("level_portal");
+    }
+
+    bool hasPersistentDialogShowing()
+    {
+        if (dialogs.empty())
+            return false;
+
+        return dialogs[0].persistent;
+    }
+
+    bool hasPendingDialogWithId(uint8_t id)
+    {
+        if (dialogs.empty())
+            return false;
+
+        for (auto &dialog : dialogs)
+            if (dialog.id == id && (dialog.duration > 0 || dialog.persistent))
+                return true;
+
+        return false;
+    }
+
+    template <typename T>
+    std::vector<T *> getOnScreenChildrenOfType(bool evaluateScreen = true)
+    {
+        std::vector<T *> output;
+        for (auto &child : children)
+        {
+            if (!camera.IsOnScreen(child->position) && evaluateScreen)
+                continue;
+
+            auto eval = dynamic_cast<T *>(child);
+            if (eval != nullptr)
+                output.push_back(eval);
+        }
+
+        return output;
     }
 
     void onUp() override
@@ -335,10 +723,60 @@ private:
         onScreenColliders.clear();
         for (auto &collider : colliders)
         {
-            if (camera->IsOnScreen(collider->pos))
+            if (camera.IsOnScreen(collider->pos))
             {
                 onScreenColliders.push_back(collider);
             }
         }
     }
 };
+
+#pragma endregion GameNode
+
+#pragma region Core Entity
+
+class EntityNode : public CoreNode
+{
+protected:
+    const ldtk::Entity &entity;
+    Camera *camera;
+    GameImageAssetProvider *spritesProvider;
+
+public:
+    EntityNode(const ldtk::Entity &entity, GameNode *game) : CoreNode(entity.getName(), game), entity(entity)
+    {
+        if (game != nullptr)
+        {
+            camera = &game->camera;
+            spritesProvider = game->spritesProvider;
+        }
+    }
+
+    olc::vi2d getSpriteDrawPosition()
+    {
+        auto &textureRect = entity.getTextureRect();
+        return olc::vi2d{textureRect.x, textureRect.y};
+    }
+
+    void onCreated() override
+    {
+        CoreNode::onCreated();
+
+        auto &entityPos = entity.getPosition();
+        position = {(float)entityPos.x, (float)entityPos.y};
+    }
+
+    void onUpdated(float fElapsedTime) override
+    {
+        CoreNode::onUpdated(fElapsedTime);
+        if (DEBUG) {
+            // Draw collider
+            auto collider = getCollider();
+            auto pos = collider.pos;
+            game->camera.WorldToScreen(pos);
+            Rect(pos, collider.size, olc::RED);
+        }
+    }
+};
+
+#pragma endregion Core Entity

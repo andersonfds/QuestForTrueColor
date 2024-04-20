@@ -17,13 +17,12 @@
 #include <olcPixelGameEngine.h>
 #include <LDtkLoader/Project.hpp>
 #include "core/audio.h"
-#include "core/core.h"
 #include "core/ui.h"
 #include "core/nodes.h"
 #include "registry.h"
 #include "menu.cc"
-#include "entities.cc"
 #include "player.cc"
+#include "npcs.cc"
 #include "collectables.cc"
 #include "ui.cc"
 
@@ -41,6 +40,7 @@ private:
 
     bool paused = true;
     bool didSkipFrame = false;
+    bool consoleMode = false;
 
     olc::HWButton upState;
     olc::HWButton downState;
@@ -48,10 +48,40 @@ private:
     olc::HWButton rightState;
     olc::HWButton enterState;
     olc::HWButton escapeState;
+    olc::HWButton f1State;
 
 public:
     QuestForTrueColor()
     {
+    }
+
+    bool OnConsoleCommand(const std::string &sCommand) override
+    {
+        // check if command is lvl <level_number>
+        if (sCommand.find("lvl") == 0)
+        {
+            auto level = "level_" + sCommand.substr(4);
+            gameNode->loadLevel(level);
+            return true;
+        }
+
+        // Flip debug mode
+        if (sCommand == "debug")
+        {
+            DEBUG = !DEBUG;
+            return true;
+        }
+
+        // Add one life
+        if (sCommand == "life")
+        {
+            auto *player = gameNode->getChild<PlayerNode>();
+            player->addLife();
+            player->addMoney(1);
+            return true;
+        }
+
+        return false;
     }
 
     bool OnUserCreate() override
@@ -85,7 +115,11 @@ public:
             updateKeyStates();
         }
 
-        if (escapeState.bPressed)
+        if (f1State.bPressed)
+        {
+            ConsoleShow(olc::Key::ESCAPE, false);
+        }
+        else if (escapeState.bPressed && !IsConsoleShowing())
         {
             if (menuNode->canContinueGame())
             {
@@ -185,5 +219,6 @@ public:
         rightState = GetKey(olc::Key::RIGHT);
         enterState = GetKey(olc::Key::SPACE);
         escapeState = GetKey(olc::Key::ESCAPE);
+        f1State = GetKey(olc::Key::F1);
     }
 };

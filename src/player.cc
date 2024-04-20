@@ -6,17 +6,21 @@ private:
     AnimatedAssetProvider *animations;
     olc::vf2d velocity = {0, 0};
     bool isOnGround = false;
-    olc::utils::geom2d::rect<float> *playerCollider;
     bool lockRight = false;
     bool lockLeft = false;
     olc::vf2d acceleration;
     float jumpTime = 0.0f;
     bool isFacingRight = true;
-    uint8_t lives = 3;
+    int8_t lives = 3;
     uint8_t money = 0;
     uint8_t storage = 0;
     int selectedIndex = -1;
     CoreNode *child = nullptr;
+    bool canMove = true;
+    float immortalityTime = 0.0f;
+
+    Sound *damageSound;
+    Sound *coinLostSound;
 
 public:
     PlayerNode(const ldtk::Entity &entity, GameNode *game) : EntityNode(entity, game)
@@ -25,8 +29,9 @@ public:
 
     ~PlayerNode() override
     {
-        delete playerCollider;
         delete animations;
+        delete damageSound;
+        delete coinLostSound;
     }
 
     uint8_t getLives()
@@ -67,7 +72,19 @@ public:
 
     void addMoney(uint8_t amount)
     {
+        if (money + amount >= 10)
+        {
+            money = 0;
+            addLife();
+            return;
+        }
         money += amount;
+    }
+
+    void addLife()
+    {
+        if (lives + 1 <= 5)
+            lives++;
     }
 
     bool addChild(CoreNode *node) override
@@ -99,21 +116,47 @@ public:
 
         this->animations->PlayAnimation("idle");
 
-        camera->offset->x = SCREEN_WIDTH * 0.5;
-        camera->offset->y = SCREEN_HEIGHT * 0.66 - 20;
-        playerCollider = new olc::utils::geom2d::rect<float>(position, {SPRITE_SIZE, SPRITE_SIZE});
+        camera->offset.x = SCREEN_WIDTH * 0.5;
+        camera->offset.y = SCREEN_HEIGHT * 0.66 - 20;
         checkpoint = position;
         lives = 3;
         storage = 1;
         money = 0;
+        canMove = true;
+        immortalityTime = 0.0f;
+
+        damageSound = new Sound("assets/sfx/damage.wav", 1);
+        coinLostSound = new Sound("assets/sfx/coin_down.wav", 2);
+    }
+
+    void disableMovement()
+    {
+        canMove = false;
+    }
+
+    void enableMovement()
+    {
+        canMove = true;
     }
 
     void onUpdated(float fElapsedTime) override
     {
         if (camera->IsOfflimits(position))
         {
-            onTakeDamage();
+            onLoseLife();
             return;
+        }
+
+        immortalityTime -= fElapsedTime;
+
+        if (immortalityTime < 0)
+            immortalityTime = 0;
+
+        canMove = lives > 0 && !game->hasPersistentDialogShowing();
+
+        if (game->hasPersistentDialogShowing())
+        {
+            animations->PlayAnimation("idle", false);
         }
 
         invokeItemFromStorage();
@@ -126,9 +169,8 @@ public:
             velocity.y = 600;
         }
 
-        camera->position->x = position.x;
-        camera->position->y = position.y;
-        playerCollider->pos = position;
+        camera->position.x = position.x;
+        camera->position.y = position.y;
 
         if (velocity.y < 0)
         {
@@ -141,33 +183,36 @@ public:
         position += velocity * fElapsedTime;
 
         // Updating the animations
-        if (isOnGround)
+        if (canMove)
         {
-            if (velocity.x != 0)
+            if (isOnGround)
             {
-                animations->PlayAnimation("walk", false);
+                if (velocity.x != 0)
+                {
+                    animations->PlayAnimation("walk", false);
+                }
+                else
+                {
+                    animations->PlayAnimation("idle", false);
+                }
             }
             else
             {
-                animations->PlayAnimation("idle", false);
-            }
-        }
-        else
-        {
-            if (velocity.y < 0)
-            {
-                animations->PlayAnimation("jump", false);
-            }
-            else if (velocity.y > 0)
-            {
-                animations->PlayAnimation("fall", false);
+                if (velocity.y < 0)
+                {
+                    animations->PlayAnimation("jump", false);
+                }
+                else if (velocity.y > 0)
+                {
+                    animations->PlayAnimation("fall", false);
+                }
             }
         }
         velocity.x = 0;
 
         // Rendering the player
         animations->Update(fElapsedTime);
-        olc::vf2d drawPosition = {this->position.x, this->position.y};
+        olc::vf2d drawPosition = this->position;
         camera->WorldToScreen(drawPosition);
         auto *options = animations->GetAssetOptions();
         options->position = drawPosition;
@@ -176,7 +221,18 @@ public:
         options->scale.x = scaleFactor;
         options->position.x += positionFactor * options->size.x;
 
+        if (immortalityTime > 0)
+            options->tint = olc::Pixel(255, 0, 0);
+        else
+            options->tint = olc::Pixel(255, 255, 255);
+
         Image(spritesProvider, options);
+        EntityNode::onUpdated(fElapsedTime);
+    }
+
+    void setCheckpoint(olc::vf2d checkpoint)
+    {
+        this->checkpoint = checkpoint;
     }
 
     olc::vf2d getDirection()
@@ -184,10 +240,15 @@ public:
         return {isFacingRight ? 1.0f : -1.0f, 0.0f};
     }
 
-    olc::utils::geom2d::rect<float> getCollider()
-    {
-        return *playerCollider;
-    }
+    // olc::utils::geom2d::rect<float> getCollider() override
+    // {
+    //     // player size horizontal is thinner than the sprite
+    //     playerCollider->size = {SPRITE_SIZE * 0.5, SPRITE_SIZE};
+    //     // updating the collider position to be centered
+    //     playerCollider->pos = position + olc::vf2d(SPRITE_SIZE * 0.25, 0);
+
+    //     return *playerCollider;
+    // }
 
     void invokeItemFromStorage()
     {
@@ -209,6 +270,11 @@ public:
 
     void onUp() override
     {
+        if (!canMove)
+        {
+            return;
+        }
+
         EntityNode::onUp();
         if (isOnGround)
         {
@@ -224,6 +290,11 @@ public:
 
     void onLeft() override
     {
+        if (!canMove)
+        {
+            return;
+        }
+
         EntityNode::onLeft();
         isFacingRight = false;
 
@@ -237,6 +308,11 @@ public:
 
     void onRight() override
     {
+        if (!canMove)
+        {
+            return;
+        }
+
         EntityNode::onRight();
         isFacingRight = true;
 
@@ -250,6 +326,11 @@ public:
 
     void onDown() override
     {
+        if (!canMove)
+        {
+            return;
+        }
+
         EntityNode::onDown();
 
         if (children.empty())
@@ -266,23 +347,44 @@ public:
 
     void onTakeDamage()
     {
-        lives--;
+        if (immortalityTime > 0)
+            return;
 
-        if (lives <= 0)
+        if (money > 0)
+        {
+            immortalityTime = 1.0f;
+            money = 0;
+            damageSound->Play(false, true);
+            coinLostSound->Play(false, true);
+            return;
+        }
+        else
+            onLoseLife();
+    }
+
+    void onLoseLife()
+    {
+        if (--lives <= 0)
         {
             onInstantDeath();
+            return;
         }
         else
         {
+            immortalityTime = 1.0f;
             position = checkpoint;
+            canMove = false;
             velocity = {0, 0};
             acceleration = {0, 0};
+            damageSound->Play(false, true);
         }
     }
 
     void onInstantDeath()
     {
         lives = 0;
+        canMove = false;
+        animations->PlayAnimation("dead", false);
         game->onGameOver();
     }
 
@@ -293,10 +395,11 @@ public:
         isOnGround = false;
         lockRight = false;
         lockLeft = false;
+        auto playerCollider = getCollider();
 
         for (auto &collider : colliders)
         {
-            if (!overlaps(*collider, *playerCollider))
+            if (!overlaps(*collider, playerCollider))
             {
                 continue;
             }
@@ -305,9 +408,9 @@ public:
             bool isJumping = velocity.y < 0;
             bool isFacingRight = velocity.x > 0;
 
-            float playerBottom = playerCollider->pos.y + playerCollider->size.y;
-            float playerLeft = playerCollider->pos.x;
-            float playerRight = playerCollider->pos.x + playerCollider->size.x;
+            float playerBottom = playerCollider.pos.y + playerCollider.size.y;
+            float playerLeft = playerCollider.pos.x;
+            float playerRight = playerCollider.pos.x + playerCollider.size.x;
 
             float colliderTop = collider->pos.y;
             float colliderLeft = collider->pos.x;
@@ -326,24 +429,24 @@ public:
                 // if is more than 10% of the player size we can consider a collision
                 // We are checking if the player is at least 10% inside the collider horizontally
                 float horizontalIntersection = std::min(playerRight, colliderRight) - std::max(playerLeft, colliderLeft);
-                if (horizontalIntersection > playerCollider->size.x * 0.1)
+                if (horizontalIntersection > playerCollider.size.x * 0.1)
                 {
                     isOnGround = true;
                     velocity.y = 0;
                     acceleration.y = 0;
-                    position.y = colliderTop - playerCollider->size.y;
+                    position.y = colliderTop - playerCollider.size.y;
                     color = olc::GREEN;
                 }
             }
             else
             {
-                if (isJumping && colliderBottom - playerCollider->pos.y < 5)
+                if (isJumping && colliderBottom - playerCollider.pos.y < 5)
                 {
                     // Calculating the horizontal intersection size between the player and the collider
                     // if is more than 10% of the player size we can consider a collision
                     // We are checking if the player is at least 10% inside the collider horizontally
                     float horizontalIntersection = std::min(playerRight, colliderRight) - std::max(playerLeft, colliderLeft);
-                    if (horizontalIntersection > playerCollider->size.x * 0.1)
+                    if (horizontalIntersection > playerCollider.size.x * 0.1)
                     {
                         velocity.y = 0;
                         acceleration.y = 0;
@@ -355,16 +458,16 @@ public:
                 /// Calculating the vertical intersection size between the player and the collider
                 /// if is more than 10% of the player size we can consider a collision
                 /// We are checking if the player is at least 10% inside the collider vertically
-                float verticalIntersection = std::min(playerBottom, colliderBottom) - std::max(playerCollider->pos.y, collider->pos.y);
+                float verticalIntersection = std::min(playerBottom, colliderBottom) - std::max(playerCollider.pos.y, collider->pos.y);
                 float bottomThreshold = std::abs(playerBottom - colliderBottom);
 
-                if (verticalIntersection > playerCollider->size.y * 0.05)
+                if (verticalIntersection > playerCollider.size.y * 0.05)
                 {
                     if (isFacingWallToTheRight && !lockRight)
                     {
                         color = olc::RED;
                         lockRight = true;
-                        float newPosition = colliderLeft - playerCollider->size.x;
+                        float newPosition = colliderLeft - playerCollider.size.x;
                         // if the position is less than 5% different from the new position we update it
                         if (std::abs(position.x - newPosition) < tolerance)
                         {

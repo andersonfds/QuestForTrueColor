@@ -332,6 +332,7 @@ private:
         auto &textureRect = sprayPos.getIconTextureRect();
 
         olc::vf2d sprayPosition = {static_cast<float>(textureRect.x), static_cast<float>(textureRect.y)};
+        auto npcs = game->getOnScreenChildrenOfType<CoreNPC>();
 
         for (auto &particle : particles)
         {
@@ -343,6 +344,13 @@ private:
             camera->WorldToScreen(position);
 
             aliveParticles++;
+
+            auto particleCollider = olc::utils::geom2d::rect<float>(particle.position, {SPRITE_SIZE, SPRITE_SIZE});
+            particleCollider.size *= 0.5f;
+
+            for (auto npc : npcs)
+                if (overlaps(npc->getCollider(), particleCollider))
+                    npc->onDamage();
 
             AssetOptions options = AssetOptions(position, sprayPosition, {1, 1}, {SPRITE_SIZE, SPRITE_SIZE});
             options.position = position;
@@ -417,3 +425,89 @@ public:
 REGISTER_NODE_TYPE(FlowerNode, "flower")
 
 #pragma endregion
+
+#pragma region Portal
+
+class PortalNode : public Collectable
+{
+private:
+    std::string targetLevel;
+
+public:
+    PortalNode(const ldtk::Entity &entity, GameNode *game) : Collectable(entity, game)
+    {
+        hintText = "Portal";
+        autoCollect = true;
+        enableWiggling = false;
+    }
+
+    void onCreated() override
+    {
+        Collectable::onCreated();
+        assetProvider->AddAnimation("spin", 6.0f, {{0, 0}, {1, 0}, {2, 0}});
+        assetProvider->PlayAnimation("spin", true);
+
+        bool isEnabled = entity.getField<ldtk::FieldType::Bool>("enabled").value_or(false);
+        targetLevel = entity.getField<ldtk::FieldType::String>("level").value_or("");
+
+        if (isEnabled)
+            game->enableLevelPortal();
+    }
+
+    void onUpdated(float fElapsedTime) override
+    {
+        if (game->isLevelPortalEnabled())
+            Collectable::onUpdated(fElapsedTime);
+    }
+
+    void onCollected() override
+    {
+        if (game->isLevelPortalEnabled())
+        {
+            game->loadLevel(targetLevel);
+        }
+    }
+};
+
+REGISTER_NODE_TYPE(PortalNode, "portal")
+
+#pragma endregion Portal
+
+#pragma region CheckPoint
+
+class CheckPointNode : public Collectable
+{
+public:
+    CheckPointNode(const ldtk::Entity &entity, GameNode *game) : Collectable(entity, game)
+    {
+        hintText = "Check Point";
+        autoCollect = true;
+        enableWiggling = false;
+    }
+
+    void onCreated() override
+    {
+        Collectable::onCreated();
+        position.y += 10;
+        assetProvider->AddAnimation("idle", 1.0, {{}});
+        assetProvider->AddAnimation("collected", 1.0, {{1, 0}});
+        assetProvider->PlayAnimation("idle", true);
+    }
+
+    void onCollected() override
+    {
+        if (didCollect)
+        {
+            return;
+        }
+
+        PlayerNode *player = game->getChild<PlayerNode>();
+        player->setCheckpoint(position);
+        assetProvider->PlayAnimation("collected");
+        didCollect = true;
+    }
+};
+
+REGISTER_NODE_TYPE(CheckPointNode, "checkpoint")
+
+#pragma endregion CheckPoint

@@ -8,6 +8,11 @@ struct GameImageAssetProvider
     {
         this->decal = new olc::Decal(new olc::Sprite(path));
     }
+
+    ~GameImageAssetProvider()
+    {
+        delete decal;
+    }
 };
 
 struct AssetOptions
@@ -43,7 +48,6 @@ private:
     olc::vf2d position;
     olc::vf2d scale;
     olc::vf2d size;
-    olc::Pixel tint;
     std::string currentAnimation = "";
     float elapsedTime = 0;
     AssetOptions *options;
@@ -55,7 +59,6 @@ public:
         this->position = position;
         this->scale = scale;
         this->size = size;
-        this->tint = tint;
 
         options = new AssetOptions(position, initialOffset, scale, size, tint);
     }
@@ -71,6 +74,16 @@ public:
         currentAnimation = name;
         if (reset)
             elapsedTime = 0;
+    }
+
+    void setTint(olc::Pixel tint, float opacity = 1.0f)
+    {
+        if (opacity < 1.0f && opacity > 0.0f)
+        {
+            tint.a = (uint8_t)(255 * opacity);
+        }
+
+        options->tint = tint;
     }
 
     void Update(float fElapsedTime)
@@ -259,7 +272,7 @@ void Image(GameImageAssetProvider *asset, AssetOptions *option)
     auto offset = option->offset;
     auto size = option->size;
 
-    ctx->DrawPartialDecal(position, decal, offset, size, scale);
+    ctx->DrawPartialDecal(position, decal, offset, size, scale, option->tint);
 }
 
 void Rect(olc::vf2d position, olc::vf2d size, olc::Pixel color, bool filled)
