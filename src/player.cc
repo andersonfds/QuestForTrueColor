@@ -240,15 +240,17 @@ public:
         return {isFacingRight ? 1.0f : -1.0f, 0.0f};
     }
 
-    // olc::utils::geom2d::rect<float> getCollider() override
-    // {
-    //     // player size horizontal is thinner than the sprite
-    //     playerCollider->size = {SPRITE_SIZE * 0.5, SPRITE_SIZE};
-    //     // updating the collider position to be centered
-    //     playerCollider->pos = position + olc::vf2d(SPRITE_SIZE * 0.25, 0);
+    olc::utils::geom2d::rect<float> getCollider() override
+    {
+        auto pos = position;
+        auto size = olc::vf2d(SPRITE_SIZE, SPRITE_SIZE);
 
-    //     return *playerCollider;
-    // }
+        // Adjusting the collider size
+        size.x *= 0.6;
+        pos.x += (SPRITE_SIZE - size.x) * 0.5;
+
+        return {pos, size};
+    }
 
     void invokeItemFromStorage()
     {
