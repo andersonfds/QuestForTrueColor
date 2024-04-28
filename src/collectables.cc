@@ -583,6 +583,7 @@ public:
     {
         Collectable::onCollected();
         game->addDialog({"Sorry, this is all I got for now XD", 1.0f, true, true, 10});
+        game->addDialog({"Thanks for playing, though!", 1.0f, true, true, 11});
     }
 };
 REGISTER_NODE_TYPE(GemCollectableNode, "gem")
