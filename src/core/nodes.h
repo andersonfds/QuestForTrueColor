@@ -440,8 +440,7 @@ public:
         deadSound = new Sound("assets/sfx/game_over.wav", 1);
         loadLevel(selectedLevel);
         displayingMinigame = false;
-        // TODO: Uncomment this line
-        // addDialog({"Developed by Anderson, with love and coffee <3", 3.0f, true, false});
+        addDialog({"Developed by Anderson, with love and coffee <3", 3.0f, true, false});
         didLoadMusic = false;
     }
 
