@@ -8,6 +8,7 @@
 #define SPRITE_SIZE 32
 
 #include <cassert>
+#include <random>
 #include <stack>
 #include <iostream>
 #include <SDL2/SDL.h>
@@ -24,12 +25,18 @@
 #include "player.cc"
 #include "npcs.cc"
 #include "collectables.cc"
+#include "minigames.cc"
 #include "ui.cc"
 
 CoreNode *CreateNode(GameNode *game, const ldtk::Entity &entity)
 {
     auto type = entity.getName();
     return CoreNodeFactory::get().createNode(type, entity, game);
+}
+
+MiniGame *CreateMiniGame(const std::string &name, GameNode *game)
+{
+    return new ShellGame(game);
 }
 
 class QuestForTrueColor : public olc::PixelGameEngine
@@ -40,7 +47,6 @@ private:
 
     bool paused = true;
     bool didSkipFrame = false;
-    bool consoleMode = false;
 
     olc::HWButton upState;
     olc::HWButton downState;
@@ -78,6 +84,14 @@ public:
             auto *player = gameNode->getChild<PlayerNode>();
             player->addLife();
             player->addMoney(1);
+            gameNode->isGameOver = false;
+            return true;
+        }
+
+        if (sCommand.find("minigame") == 0)
+        {
+            auto minigame = sCommand.substr(9);
+            gameNode->setMiniGame(minigame);
             return true;
         }
 
@@ -213,11 +227,14 @@ public:
 
     void updateKeyStates()
     {
-        upState = GetKey(olc::Key::UP);
-        downState = GetKey(olc::Key::DOWN);
-        leftState = GetKey(olc::Key::LEFT);
-        rightState = GetKey(olc::Key::RIGHT);
-        enterState = GetKey(olc::Key::SPACE);
+        if (!IsConsoleShowing())
+        {
+            upState = GetKey(olc::Key::UP);
+            downState = GetKey(olc::Key::DOWN);
+            leftState = GetKey(olc::Key::LEFT);
+            rightState = GetKey(olc::Key::RIGHT);
+            enterState = GetKey(olc::Key::SPACE);
+        }
         escapeState = GetKey(olc::Key::ESCAPE);
         f1State = GetKey(olc::Key::F1);
     }

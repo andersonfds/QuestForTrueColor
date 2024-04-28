@@ -136,6 +136,10 @@ public:
         return true;
     }
 
+    virtual void onMiniGameOver(std::string gameName, bool didWin)
+    {
+    }
+
     bool prependChild(CoreNode *node)
     {
         // check if child already exists
@@ -182,10 +186,12 @@ public:
     }
 
     template <typename T>
-    T *getChildOfType()
+    T *getChildOfType(std::string name = "")
     {
         for (auto &child : children)
         {
+            if (!name.empty() && child->name != name)
+                continue;
             auto casted = dynamic_cast<T *>(child);
             if (casted != nullptr)
                 return casted;
@@ -197,6 +203,10 @@ public:
     virtual void onCreated()
     {
         clearChildren();
+    }
+
+    virtual void onAllCreated()
+    {
     }
 
     virtual void onUpdated(float fElapsedTime)
@@ -261,6 +271,56 @@ private:
 
 #pragma endregion CoreNode
 
+#pragma region MiniGame
+
+class MiniGame : public CoreNode
+{
+private:
+    bool isGameOver = false;
+    bool isGameWon = false;
+
+public:
+    MiniGame(const std::string &name, GameNode *game) : CoreNode(name, game)
+    {
+    }
+
+    void finishGame(bool won)
+    {
+        isGameOver = true;
+        isGameWon = won;
+    }
+
+    bool getIsGameWon()
+    {
+        return isGameWon;
+    }
+
+    bool getIsGameOver()
+    {
+        return isGameOver;
+    }
+
+    void onCreated() override
+    {
+        CoreNode::onCreated();
+        isGameOver = false;
+        isGameWon = false;
+    }
+
+    void onUpdated(float fElapsedTime) override
+    {
+        CoreNode::onUpdated(fElapsedTime);
+
+        if (isGameOver)
+            return;
+
+        for (auto &child : children)
+            child->onUpdated(fElapsedTime);
+    }
+};
+
+#pragma endregion MiniGame
+
 #pragma region Iterator
 
 class CoreNodeIterator
@@ -317,6 +377,7 @@ enum class VAlign
 #pragma region GameNode
 
 CoreNode *CreateNode(GameNode *node, const ldtk::Entity &entity);
+MiniGame *CreateMiniGame(const std::string &name, GameNode *node);
 
 struct Dialog
 {
@@ -340,6 +401,8 @@ private:
     std::map<std::string, bool> flags;
     Sound *deadSound;
     CoreNode *playerNode;
+    MiniGame *currentMiniGame;
+    bool displayingMinigame = false;
 
 public:
     bool isGameOver = false;
@@ -359,6 +422,13 @@ public:
         return project.getWorld().getEnum(name);
     }
 
+    olc::vf2d getPositionForEnumValue(const std::string &enumName, const std::string &value)
+    {
+        auto &enumValue = getGameEnum(enumName)[value];
+        auto &textureRect = enumValue.getIconTextureRect();
+        return {static_cast<float>(textureRect.x), static_cast<float>(textureRect.y)};
+    }
+
     void onCreated() override
     {
         CoreNode::onCreated();
@@ -368,7 +438,45 @@ public:
         spritesProvider = new GameImageAssetProvider("assets/sprite_project/Sprites.png");
         deadSound = new Sound("assets/sfx/game_over.wav", 1);
         loadLevel(selectedLevel);
-        addDialog({"Developed by Anderson, with love and coffee <3", 3.0f, true, false});
+        displayingMinigame = false;
+        // TODO: Uncomment this line
+        // addDialog({"Developed by Anderson, with love and coffee <3", 3.0f, true, false});
+    }
+
+    void setMiniGame(const std::string &game = "ShellGame")
+    {
+        if (currentMiniGame != nullptr)
+            delete currentMiniGame;
+
+        currentMiniGame = CreateMiniGame(game, this);
+
+        if (currentMiniGame != nullptr)
+        {
+            displayingMinigame = true;
+            currentMiniGame->onCreated();
+        }
+    }
+
+    bool isMiniGameActive()
+    {
+        if (currentMiniGame == nullptr)
+            return false;
+
+        bool isGameOver = currentMiniGame->getIsGameOver();
+
+        if (isGameOver)
+        {
+            auto gameName = currentMiniGame->name;
+            auto didWin = currentMiniGame->getIsGameWon();
+            for (auto &child : children)
+                child->onMiniGameOver(gameName, didWin);
+
+            delete currentMiniGame;
+            currentMiniGame = nullptr;
+            displayingMinigame = false;
+        }
+
+        return !isGameOver;
     }
 
     void loadLevel(const std::string levelName)
@@ -441,6 +549,9 @@ public:
 
         uiNode->onCreated();
         addChild(uiNode);
+
+        for (auto &child : children)
+            child->onAllCreated();
     }
 
     bool getFlag(std::string flag)
@@ -520,6 +631,14 @@ public:
 
         // Drawing background image
         Image(backgroundProvider);
+
+        if (isMiniGameActive())
+        {
+            currentMiniGame->onUpdated(fElapsedTime);
+            drawOverlayDialog(fElapsedTime);
+            return;
+        }
+
         updateOnScreenColliders();
 
         auto &world = project.getWorld();
@@ -769,7 +888,8 @@ public:
     void onUpdated(float fElapsedTime) override
     {
         CoreNode::onUpdated(fElapsedTime);
-        if (DEBUG) {
+        if (DEBUG)
+        {
             // Draw collider
             auto collider = getCollider();
             auto pos = collider.pos;

@@ -186,6 +186,11 @@ void Rect(olc::vf2d position, olc::vf2d size, olc::Pixel color = olc::WHITE, boo
 bool Pressed(olc::Key key);
 
 /**
+ * Whether a key is pressed.
+ */
+bool Pressed(int key);
+
+/**
  * @brief MousePosition
  * Get the mouse position.
  *
@@ -290,6 +295,12 @@ void Rect(olc::vf2d position, olc::vf2d size, olc::Pixel color, bool filled)
 bool Pressed(olc::Key key)
 {
     return ctx->GetKey(key).bPressed;
+}
+
+bool Pressed(int key)
+{
+    auto keyNumber = static_cast<olc::Key>(key);
+    return ctx->GetKey(keyNumber).bPressed;
 }
 
 bool Held(olc::Key key)

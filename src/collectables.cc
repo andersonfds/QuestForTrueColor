@@ -306,6 +306,9 @@ public:
     {
         auto aliveParticles = renderParticles(fElapsedTime);
 
+        if (game->isGameOver)
+            return;
+
         bool isHoldingSpray = Held(olc::Key::X);
 
         if (isHoldingSpray)
@@ -511,3 +514,167 @@ public:
 REGISTER_NODE_TYPE(CheckPointNode, "checkpoint")
 
 #pragma endregion CheckPoint
+
+#pragma region Gem
+
+class GemNode : public CoreNode
+{
+private:
+    olc::vf2d iconCoords;
+
+public:
+    GemNode(GameNode *game) : CoreNode("Gem", game)
+    {
+    }
+
+    void onCreated() override
+    {
+        CoreNode::onCreated();
+        iconCoords = game->getPositionForEnumValue("world", "gem");
+    }
+
+    void onUpdated(float fElapsedTime) override
+    {
+        AssetOptions options = AssetOptions(position, iconCoords, {1, 1}, {SPRITE_SIZE, SPRITE_SIZE});
+        Image(game->spritesProvider, &options);
+    }
+};
+
+class GemCollectableNode : public Collectable
+{
+public:
+    bool visible = false;
+
+    GemCollectableNode(const ldtk::Entity &entity, GameNode *game) : Collectable(entity, game)
+    {
+        hintText = "Gem";
+    }
+
+    void onCreated() override
+    {
+        Collectable::onCreated();
+        visible = false;
+    }
+
+    void onUpdated(float fElapsedTime) override
+    {
+        if (game->getFlag("showGem"))
+            Collectable::onUpdated(fElapsedTime);
+    }
+
+    void onCollected() override
+    {
+        Collectable::onCollected();
+        game->addDialog({"Sorry, this is all I got for now XD", 1.0f, true, true, 10});
+    }
+};
+REGISTER_NODE_TYPE(GemCollectableNode, "gem")
+
+#pragma endregion Gem
+
+#pragma region Shell
+
+class ShellNode : public CoreNode
+{
+private:
+    olc::vf2d iconCoords;
+    float deltaTime = 0.0f;
+    olc::vf2d newPosition;
+    bool isMoving = false;
+    float displayShellTime = 0.0f;
+
+public:
+    ShellNode(GameNode *game) : CoreNode("Shell", game)
+    {
+    }
+
+    void onCreated() override
+    {
+        CoreNode::onCreated();
+        iconCoords = game->getPositionForEnumValue("world", "shell");
+        deltaTime = 0;
+        newPosition = position;
+    }
+
+    void display()
+    {
+        displayShellTime = 4.0f;
+    }
+
+    void onUpdated(float fElapsedTime) override
+    {
+        deltaTime += fElapsedTime;
+        displayShellTime -= fElapsedTime;
+
+        if (deltaTime > 1.0f)
+        {
+            deltaTime = 0.0f;
+        }
+
+        if (displayShellTime < 0)
+        {
+            displayShellTime = 0;
+        }
+
+        if (position != newPosition)
+        {
+            auto diff = newPosition - position;
+            auto speed = 100.0f;
+            auto offset = speed * fElapsedTime;
+            auto length = diff.mag();
+            if (length < offset)
+            {
+                position = newPosition;
+            }
+            else
+            {
+                position += diff.norm() * offset;
+            }
+        }
+
+        isMoving = position != newPosition;
+
+        for (auto child : children)
+            child->position = position;
+
+        CoreNode::onUpdated(fElapsedTime);
+        AssetOptions options = AssetOptions(position, iconCoords, {1, 1}, {SPRITE_SIZE, SPRITE_SIZE});
+
+        if (displayShellTime > 0)
+        {
+            options.position.y -= 40 * displayShellTime;
+        }
+        else
+        {
+            options.position.y = position.y;
+        }
+
+        Image(game->spritesProvider, &options);
+    }
+
+    void moveTo(olc::vf2d position)
+    {
+        if (displayShellTime > 0)
+        {
+            return;
+        }
+
+        deltaTime = 0.0f;
+        newPosition = position;
+        isMoving = true;
+    }
+
+    void setPosition(olc::vf2d pos)
+    {
+        position = pos;
+        newPosition = pos;
+        isMoving = false;
+    }
+
+    bool getIsMoving()
+    {
+        return isMoving;
+    }
+};
+
+#pragma endregion Shell

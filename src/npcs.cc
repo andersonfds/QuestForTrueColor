@@ -461,7 +461,8 @@ private:
             "ERIK: The secret is that...",
             "ERIK: I can open portals, like in rick and morty",
             "ERIK: I'll open one for you to the city",
-            "ERIK: You should head to the city there's more mess to clean",
+            "ERIK: In the city you might find the hex guardian",
+            "ERIK: He may provide you with the infinity gem that\nyou need to bring balance to the world",
         });
     }
 
@@ -488,3 +489,114 @@ private:
 REGISTER_NODE_TYPE(ErikNPC, "erik");
 
 #pragma endregion Erik - NPC
+
+#pragma region Martin - NPC
+
+class MartinNPC : public CoreNPC
+{
+private:
+    bool didSetMiniGame = false;
+    bool didPlayDialog = false;
+    bool didPlaySecondDialog = false;
+    bool didWin = false;
+
+public:
+    MartinNPC(const ldtk::Entity &entity, GameNode *game) : CoreNPC(entity, game)
+    {
+    }
+
+    void onCreated() override
+    {
+        CoreNPC::onCreated();
+        animProvider->AddAnimation("idle", 2.0f, {{}, {1, 0}});
+        animProvider->PlayAnimation("idle");
+        didSetMiniGame = false;
+        didPlayDialog = false;
+        didWin = false;
+    }
+
+    void onAllCreated() override
+    {
+        CoreNPC::onAllCreated();
+        game->setFlag("showGem", false);
+    }
+
+    void onInteracted(PlayerNode *player) override
+    {
+        if (!didPlayDialog)
+        {
+            didPlayDialog = true;
+            playHelloDialog();
+        }
+        else if (!didPlaySecondDialog)
+        {
+            didPlaySecondDialog = true;
+            playRetryDialog();
+        }
+    }
+
+    void onChatEnded() override
+    {
+        didPlaySecondDialog = false;
+
+        if (didSetMiniGame)
+            return;
+
+        didSetMiniGame = true;
+        game->setMiniGame("ShellGame");
+    }
+
+    void playHelloDialog()
+    {
+        chat({
+            "MARTIN: Hello, I'm Martin, the Hex Guardian",
+            "MARTIN: I'm here to protect the infinity gem",
+            "MARTIN: I know what you are thinking...",
+            "MARTIN: And yes...",
+            "MARTIN: My armor is fully made of gold",
+            "YOU: I wasn't thinking that",
+            "MARTIN: I know, I'm just messing with you",
+            "YOU: Plus, it looks like plastic",
+            "MARTIN: We are in the ancient times, we don't have plastic yet",
+            "MARTIN: Anyway, you can't have the gem",
+            "MARTIN: You need to prove yourself first",
+            "MARTIN: By playing a shell game... with me",
+            "MARTIN: If you guess where the gem is, you can have it",
+            "YOU: That sounds fair",
+        });
+    }
+
+    void playRetryDialog()
+    {
+        didSetMiniGame = false;
+        chat({
+            "MARTIN: Fine, I can give you another chance",
+        });
+    }
+
+    void onMiniGameOver(std::string name, bool didWin) override
+    {
+        if (name != "ShellGame")
+            return;
+
+        this->didWin = didWin;
+
+        if (didWin)
+        {
+            this->game->setFlag("showGem", true);
+            chat({
+                "MARTIN: You won the game, here is the gem",
+                "MARTIN: Use it wisely",
+            });
+        }
+        else
+        {
+            chat({
+                "MARTIN: You lost the game. I'll keep the gem",
+            });
+        }
+    }
+};
+REGISTER_NODE_TYPE(MartinNPC, "martin");
+
+#pragma endregion Martin - NPC
