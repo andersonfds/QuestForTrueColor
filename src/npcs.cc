@@ -523,6 +523,12 @@ public:
 
     void onInteracted(PlayerNode *player) override
     {
+        if (didWin)
+        {
+            chat({"MARTIN: Thinking..."});
+            return;
+        }
+
         if (!didPlayDialog)
         {
             didPlayDialog = true;
@@ -549,6 +555,8 @@ public:
     void playHelloDialog()
     {
         chat({
+            "MARTIN: Thinking... 1/2 (with eyes closed)",
+            "MARTIN: Thinking... 2/2 (with eyes closed)",
             "MARTIN: Hello, I'm Martin, the Hex Guardian",
             "MARTIN: I'm here to protect the infinity gem",
             "MARTIN: I know what you are thinking...",

@@ -174,6 +174,8 @@ public:
                 paused = false;
             }
 
+            StopMusic();
+
             menuNode->onUpdated(fElapsedTime);
         }
         else

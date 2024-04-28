@@ -248,6 +248,7 @@ private:
     const uint8_t PARTICLE_COUNT = 80;
     const uint8_t EMISSION_RATE = 40;
     const uint8_t EMISSION_PER_SETUP = 8;
+    Sound *spraySfx;
 
     uint8_t emitted = 0;
     float deltaLastEmission = 0.0f;
@@ -262,6 +263,7 @@ public:
     void onCreated() override
     {
         Collectable::onCreated();
+        spraySfx = new Sound("assets/sfx/spray.wav", 1);
     }
 
     void onCollected() override
@@ -312,7 +314,12 @@ public:
         bool isHoldingSpray = Held(olc::Key::X);
 
         if (isHoldingSpray)
+        {
             deltaLastEmission += fElapsedTime;
+
+            if (!spraySfx->IsPlaying())
+                spraySfx->Play(false, true);
+        }
 
         if (aliveParticles <= EMISSION_RATE && isHoldingSpray && deltaLastEmission >= 0.05f)
         {
@@ -480,12 +487,20 @@ REGISTER_NODE_TYPE(PortalNode, "portal")
 
 class CheckPointNode : public Collectable
 {
+private:
+    Sound *checkpointActivatedSfx;
+
 public:
     CheckPointNode(const ldtk::Entity &entity, GameNode *game) : Collectable(entity, game)
     {
         hintText = "Check Point";
         autoCollect = true;
         enableWiggling = false;
+    }
+
+    ~CheckPointNode() override
+    {
+        delete checkpointActivatedSfx;
     }
 
     void onCreated() override
@@ -495,6 +510,7 @@ public:
         assetProvider->AddAnimation("idle", 1.0, {{}});
         assetProvider->AddAnimation("collected", 1.0, {{1, 0}});
         assetProvider->PlayAnimation("idle", true);
+        checkpointActivatedSfx = new Sound("assets/sfx/flag_put.wav", 1);
     }
 
     void onCollected() override
@@ -504,6 +520,7 @@ public:
             return;
         }
 
+        checkpointActivatedSfx->Play(false, false);
         PlayerNode *player = game->getChild<PlayerNode>();
         player->setCheckpoint(position);
         assetProvider->PlayAnimation("collected");

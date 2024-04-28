@@ -19,9 +19,19 @@ void LoadMusic(std::string path, float volume = 0.5f)
     Mix_VolumeMusic(MIX_MAX_VOLUME * volume);
 }
 
+bool IsPlayingMusic()
+{
+    return Mix_PlayingMusic();
+}
+
+void ResumeMusic()
+{
+    Mix_ResumeMusic();
+}
+
 void StopMusic()
 {
-    Mix_HaltMusic();
+    Mix_PauseMusic();
 }
 
 void ClearMusic()
@@ -101,7 +111,7 @@ public:
 
     void Stop()
     {
-        // Mix_HaltChannel(channel);
+        Mix_HaltChannel(channel);
     }
 
     ~Sound()

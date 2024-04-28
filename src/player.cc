@@ -21,6 +21,8 @@ private:
 
     Sound *damageSound;
     Sound *coinLostSound;
+    Sound *jumpSound;
+    Sound *walkSound;
 
 public:
     PlayerNode(const ldtk::Entity &entity, GameNode *game) : EntityNode(entity, game)
@@ -32,6 +34,8 @@ public:
         delete animations;
         delete damageSound;
         delete coinLostSound;
+        delete jumpSound;
+        delete walkSound;
     }
 
     uint8_t getLives()
@@ -127,6 +131,8 @@ public:
 
         damageSound = new Sound("assets/sfx/damage.wav", 1);
         coinLostSound = new Sound("assets/sfx/coin_down.wav", 2);
+        jumpSound = new Sound("assets/sfx/jump.wav", 3);
+        walkSound = new Sound("assets/sfx/walk.wav", 4);
     }
 
     void disableMovement()
@@ -190,10 +196,13 @@ public:
                 if (velocity.x != 0)
                 {
                     animations->PlayAnimation("walk", false);
+                    if (!walkSound->IsPlaying())
+                        walkSound->Play(false, true);
                 }
                 else
                 {
                     animations->PlayAnimation("idle", false);
+                    walkSound->Stop();
                 }
             }
             else
@@ -281,6 +290,7 @@ public:
         if (isOnGround)
         {
             jumpTime = 0.0f;
+            jumpSound->Play(false, true);
             this->velocity.y = -250;
             isOnGround = false;
         }

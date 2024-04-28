@@ -403,6 +403,7 @@ private:
     CoreNode *playerNode;
     MiniGame *currentMiniGame;
     bool displayingMinigame = false;
+    bool didLoadMusic = false;
 
 public:
     bool isGameOver = false;
@@ -441,6 +442,15 @@ public:
         displayingMinigame = false;
         // TODO: Uncomment this line
         // addDialog({"Developed by Anderson, with love and coffee <3", 3.0f, true, false});
+        didLoadMusic = false;
+    }
+
+    ~GameNode()
+    {
+        delete spritesProvider;
+        delete deadSound;
+        delete backgroundProvider;
+        ClearMusic();
     }
 
     void setMiniGame(const std::string &game = "ShellGame")
@@ -623,11 +633,21 @@ public:
 
     void onUpdated(float fElapsedTime) override
     {
+        if (!IsPlayingMusic() && !didLoadMusic)
+        {
+            LoadMusic("assets/sfx/huperboloid.wav");
+            didLoadMusic = true;
+        }
+
         if (isFullscreenDialog())
         {
             drawOverlayDialog(fElapsedTime);
+            StopMusic();
             return;
         }
+
+        if (didLoadMusic)
+            ResumeMusic();
 
         // Drawing background image
         Image(backgroundProvider);
