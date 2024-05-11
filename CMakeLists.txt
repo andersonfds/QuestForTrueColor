@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 3.1...3.28)
 include(FetchContent)
 
+set(CMAKE_CXX_COMPILER g++)
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_BUILD_TYPE Debug)
 
 project(
     QuestForTrueColor
@@ -33,8 +35,6 @@ if (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/olcUTIL_Geometry2D.h")
     file(DOWNLOAD "${PIXEL_GAME_ENGINE_UTIL_GEOMETRY2D_URL}" "${CMAKE_CURRENT_SOURCE_DIR}/include/olcUTIL_Geometry2D.h")
 endif()
 
-add_compile_options(-lSDL2 -lSDL2_mixer)
-
 # Include olcPixelGameEngine dependencies
 find_package(PNG REQUIRED)
 find_package(OpenGL REQUIRED)
@@ -56,20 +56,36 @@ target_include_directories(QuestForTrueColor PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
 target_include_directories(QuestForTrueColor PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/core)
 target_link_libraries(QuestForTrueColor PRIVATE LDtkLoader)
 
-# SOUND PROCESSING
-find_program(SDL2_CONFIG sdl2-config REQUIRED)
-execute_process(
-    COMMAND ${SDL2_CONFIG} --cflags
-    OUTPUT_VARIABLE SDL2_INCLUDE_DIRS
-    OUTPUT_STRIP_TRAILING_WHITESPACE
+# Fetch content for SDL2
+FetchContent_Declare(
+  sdl2
+  GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
+  GIT_TAG release-2.30.3
 )
-execute_process(
-    COMMAND ${SDL2_CONFIG} --libs
-    OUTPUT_VARIABLE SDL2_LIBRARIES
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-find_library(SDL2_MIXER_LIBRARY NAMES SDL2_mixer REQUIRED)
-find_path(SDL2_MIXER_INCLUDE_DIR NAME SDL_mixer.h HINTS /opt/homebrew/include/SDL2)
-include_directories(${SDL2_INCLUDE_DIRS} ${SDL2_MIXER_INCLUDE_DIR})
-target_link_libraries(QuestForTrueColor PRIVATE ${SDL2_LIBRARIES} ${SDL2_MIXER_LIBRARY})
 
+FetchContent_GetProperties(sdl2)
+if(NOT sdl2_POPULATED)
+  FetchContent_Populate(sdl2)
+  add_subdirectory(${sdl2_SOURCE_DIR} ${sdl2_BINARY_DIR} EXCLUDE_FROM_ALL)
+endif()
+find_package(sdl2 REQUIRED)
+target_include_directories(QuestForTrueColor PRIVATE ${sdl2_SOURCE_DIR}/include)
+target_link_libraries(QuestForTrueColor PRIVATE SDL2::SDL2)
+
+# Fetch content for SDL2_mixer
+FetchContent_Declare(
+  sdl2_mixer
+  GIT_REPOSITORY https://github.com/libsdl-org/SDL_mixer.git
+  GIT_TAG release-2.8.0
+)
+FetchContent_GetProperties(sdl2_mixer)
+set(SDL2MIXER_OPUS OFF CACHE BOOL "Disable Opus support" FORCE)
+
+if(NOT sdl2_mixer_POPULATED)
+  FetchContent_Populate(sdl2_mixer)
+  add_subdirectory(${sdl2_mixer_SOURCE_DIR} ${sdl2_mixer_BINARY_DIR} EXCLUDE_FROM_ALL)
+endif()
+find_package(SDL2_mixer REQUIRED)
+target_include_directories(QuestForTrueColor PRIVATE ${sdl2_mixer_SOURCE_DIR}/include)
+target_link_libraries(QuestForTrueColor PRIVATE SDL2_mixer)
+add_compile_definitions(_THREAD_SAFE)
