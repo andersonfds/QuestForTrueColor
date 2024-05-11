@@ -36,19 +36,6 @@ if (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/olcUTIL_Geometry2D.h")
 endif()
 
 # Include olcPixelGameEngine dependencies
-find_package(PNG REQUIRED)
-find_package(OpenGL REQUIRED)
-find_package(GLUT REQUIRED)
-
-FetchContent_Declare(
-  ldtkloader
-  GIT_REPOSITORY https://github.com/Madour/LDtkLoader.git
-  GIT_TAG        1.5.3
-)
-
-FetchContent_MakeAvailable(ldtkloader)
-
-# Include olcPixelGameEngine dependencies
 find_package(OpenGL REQUIRED)
 target_link_libraries(QuestForTrueColor PRIVATE OpenGL::GL)
 
@@ -60,6 +47,13 @@ if (APPLE)
     target_link_libraries(QuestForTrueColor PRIVATE GLUT::GLUT)
 endif()
 
+FetchContent_Declare(
+  ldtkloader
+  GIT_REPOSITORY https://github.com/Madour/LDtkLoader.git
+  GIT_TAG        1.5.3
+)
+
+FetchContent_MakeAvailable(ldtkloader)
 
 target_include_directories(QuestForTrueColor PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_include_directories(QuestForTrueColor PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/core)
