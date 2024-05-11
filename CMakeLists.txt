@@ -48,9 +48,18 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(ldtkloader)
 
+# Include olcPixelGameEngine dependencies
+find_package(OpenGL REQUIRED)
 target_link_libraries(QuestForTrueColor PRIVATE OpenGL::GL)
-target_link_libraries(QuestForTrueColor PRIVATE PNG::PNG)
-target_link_libraries(QuestForTrueColor PRIVATE GLUT::GLUT)
+
+if (APPLE)
+    find_package(PNG REQUIRED)
+    find_package(GLUT REQUIRED)
+
+    target_link_libraries(QuestForTrueColor PRIVATE PNG::PNG)
+    target_link_libraries(QuestForTrueColor PRIVATE GLUT::GLUT)
+endif()
+
 
 target_include_directories(QuestForTrueColor PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_include_directories(QuestForTrueColor PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/core)
@@ -68,9 +77,12 @@ if(NOT sdl2_POPULATED)
   FetchContent_Populate(sdl2)
   add_subdirectory(${sdl2_SOURCE_DIR} ${sdl2_BINARY_DIR} EXCLUDE_FROM_ALL)
 endif()
-find_package(sdl2 REQUIRED)
 target_include_directories(QuestForTrueColor PRIVATE ${sdl2_SOURCE_DIR}/include)
-target_link_libraries(QuestForTrueColor PRIVATE SDL2::SDL2)
+target_link_libraries(QuestForTrueColor PRIVATE SDL2)
+
+if(NOT TARGET SDL2::SDL2)
+  add_library(SDL2::SDL2 ALIAS SDL2)
+endif()
 
 # Fetch content for SDL2_mixer
 FetchContent_Declare(
@@ -85,7 +97,6 @@ if(NOT sdl2_mixer_POPULATED)
   FetchContent_Populate(sdl2_mixer)
   add_subdirectory(${sdl2_mixer_SOURCE_DIR} ${sdl2_mixer_BINARY_DIR} EXCLUDE_FROM_ALL)
 endif()
-find_package(SDL2_mixer REQUIRED)
 target_include_directories(QuestForTrueColor PRIVATE ${sdl2_mixer_SOURCE_DIR}/include)
 target_link_libraries(QuestForTrueColor PRIVATE SDL2_mixer)
 add_compile_definitions(_THREAD_SAFE)
