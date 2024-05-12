@@ -196,8 +196,7 @@ public:
                 if (velocity.x != 0)
                 {
                     animations->PlayAnimation("walk", false);
-                    if (!walkSound->IsPlaying())
-                        walkSound->Play(false, true);
+                    walkSound->Play(false, false);
                 }
                 else
                 {
