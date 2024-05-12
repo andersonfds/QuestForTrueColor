@@ -258,7 +258,7 @@ void Text(std::string data, olc::Pixel color, olc::vf2d position, olc::vf2d scal
 
 void Image(GameImageAssetProvider *asset, AssetOptions *option)
 {
-    if (asset == nullptr || asset->decal == nullptr)
+    if (!asset || !asset->decal)
     {
         throw std::runtime_error("Asset or Decal is null");
         return;
@@ -266,7 +266,7 @@ void Image(GameImageAssetProvider *asset, AssetOptions *option)
 
     olc::Decal *decal = asset->decal;
 
-    if (option == nullptr)
+    if (!option)
     {
         ctx->DrawDecal({0, 0}, decal, {1, 1});
         return;

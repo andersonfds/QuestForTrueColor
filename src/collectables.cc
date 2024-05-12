@@ -127,7 +127,7 @@ public:
 
     void onReparent() override
     {
-        if (this->parent == nullptr)
+        if (!this->parent)
         {
             position.x = std::round(position.x / SPRITE_SIZE) * SPRITE_SIZE;
             position.y = std::round(position.y / SPRITE_SIZE) * SPRITE_SIZE;
@@ -139,12 +139,12 @@ public:
 
     bool isCollidingWithPlayer()
     {
-        if (player == nullptr)
+        if (!player)
         {
             player = game->getChild<PlayerNode>();
         }
 
-        if (player == nullptr)
+        if (!player)
         {
             return false;
         }

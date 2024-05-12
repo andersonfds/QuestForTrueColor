@@ -323,7 +323,7 @@ public:
                     pos.x += spacing * i;
                 }
 
-                bool isSlotEmpty = items[i] == nullptr;
+                bool isSlotEmpty = !items[i];
 
                 int slotDraw = i == selectedSlot ? 1 : 0;
 
@@ -362,7 +362,7 @@ public:
         candidateItem = item;
         if (items.size() > 0 && selectedSlot >= 0)
         {
-            if (items[selectedSlot] == nullptr)
+            if (!items[selectedSlot])
             {
                 items[selectedSlot] = candidateItem;
                 candidateItem->OnActivate();

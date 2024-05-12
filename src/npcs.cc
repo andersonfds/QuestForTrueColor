@@ -135,7 +135,7 @@ public:
     {
         auto *flower = player->getChildOfType<FlowerNode>();
 
-        if (flower == nullptr || isVillain)
+        if (!flower || isVillain)
         {
             return;
         }

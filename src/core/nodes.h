@@ -468,7 +468,7 @@ public:
 
     bool isMiniGameActive()
     {
-        if (currentMiniGame == nullptr)
+        if (!currentMiniGame)
             return false;
 
         bool isGameOver = currentMiniGame->getIsGameOver();
@@ -544,7 +544,7 @@ public:
         {
             auto *node = CreateNode(this, entity);
 
-            if (node == nullptr)
+            if (!node)
                 continue;
 
             node->game = this;

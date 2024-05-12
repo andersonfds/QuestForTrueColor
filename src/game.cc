@@ -216,7 +216,7 @@ public:
 
     GameNode *getGameNode(bool recreate = false)
     {
-        if (gameNode == nullptr)
+        if (!gameNode)
         {
             return nullptr;
         }

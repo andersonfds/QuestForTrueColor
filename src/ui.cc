@@ -29,7 +29,7 @@ public:
     {
         auto *player = getPlayer();
 
-        if (player == nullptr)
+        if (!player)
         {
             return;
         }

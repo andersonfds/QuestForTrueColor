@@ -83,7 +83,7 @@ public:
         for (int i = 0; i < shellCount; i++)
         {
             auto *shell = getChildOfType<ShellNode>("shell_" + std::to_string(i + 1));
-            if (shell == nullptr)
+            if (!shell)
             {
                 return;
             }
@@ -97,7 +97,7 @@ public:
         for (int i = 0; i < shellCount; i++)
         {
             auto *shell = getChildOfType<ShellNode>("shell_" + std::to_string(i + 1));
-            if (shell == nullptr)
+            if (!shell)
             {
                 return;
             }
@@ -114,7 +114,7 @@ public:
     bool isTheRightShell(int shellIndex)
     {
         auto *shell = getChildOfType<ShellNode>("shell_" + std::to_string(shellIndex));
-        if (shell == nullptr)
+        if (!shell)
         {
             return false;
         }
@@ -125,7 +125,7 @@ public:
 
     void switchShellPosition(ShellNode *shell1, ShellNode *shell2)
     {
-        if (shell1 == nullptr || shell2 == nullptr)
+        if (!shell1 || !shell2)
         {
             return;
         }
@@ -153,7 +153,7 @@ public:
         auto *shell2 = getChildOfType<ShellNode>("shell_2");
         auto *shell3 = getChildOfType<ShellNode>("shell_3");
 
-        if (shell1 == nullptr || shell2 == nullptr || shell3 == nullptr)
+        if (!shell1 || !shell2 || !shell3)
         {
             return;
         }

@@ -105,7 +105,7 @@ public:
 
             Node *node = CreateEntity(entity);
 
-            if (node == nullptr)
+            if (!node)
                 continue;
 
             node->SetEntityID(entity.iid);
