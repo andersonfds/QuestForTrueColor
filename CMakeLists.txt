@@ -25,6 +25,9 @@ set(PIXEL_GAME_ENGINE_URL "https://github.com/OneLoneCoder/olcPixelGameEngine/re
 set(PIXEL_GAME_ENGINE_UTIL_GEOMETRY2D_VERSION main)
 set(PIXEL_GAME_ENGINE_UTIL_GEOMETRY2D_URL "https://raw.githubusercontent.com/OneLoneCoder/olcUTIL_Geometry2D/${PIXEL_GAME_ENGINE_UTIL_GEOMETRY2D_VERSION}/olcUTIL_Geometry2D.h")
 
+set(OLC_SOUND_WAVE_ENGINE_BRANCH main)
+set(OLC_SOUND_WAVE_ENGINE_URL "https://raw.githubusercontent.com/OneLoneCoder/olcSoundWaveEngine/${OLC_SOUND_WAVE_ENGINE_BRANCH}/olcPixelGameEngine.h")
+
 if (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/olcPixelGameEngine.h")
     Message("Downloading olcPixelGameEngine.h")
     file(DOWNLOAD "${PIXEL_GAME_ENGINE_URL}" "${CMAKE_CURRENT_SOURCE_DIR}/include/olcPixelGameEngine.h")
@@ -59,38 +62,46 @@ target_include_directories(QuestForTrueColor PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
 target_include_directories(QuestForTrueColor PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/core)
 target_link_libraries(QuestForTrueColor PRIVATE LDtkLoader)
 
-# Fetch content for SDL2
-FetchContent_Declare(
-  sdl2
-  GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
-  GIT_TAG release-2.30.3
-)
+if (APPLE)
+  # Fetch content for SDL2
+  FetchContent_Declare(
+    sdl2
+    GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
+    GIT_TAG release-2.30.3
+  )
 
-FetchContent_GetProperties(sdl2)
-if(NOT sdl2_POPULATED)
-  FetchContent_Populate(sdl2)
-  add_subdirectory(${sdl2_SOURCE_DIR} ${sdl2_BINARY_DIR} EXCLUDE_FROM_ALL)
+  FetchContent_GetProperties(sdl2)
+  if(NOT sdl2_POPULATED)
+    FetchContent_Populate(sdl2)
+    add_subdirectory(${sdl2_SOURCE_DIR} ${sdl2_BINARY_DIR} EXCLUDE_FROM_ALL)
+  endif()
+  target_include_directories(QuestForTrueColor PRIVATE ${sdl2_SOURCE_DIR}/include)
+  target_link_libraries(QuestForTrueColor PRIVATE SDL2)
+
+  if(NOT TARGET SDL2::SDL2)
+    add_library(SDL2::SDL2 ALIAS SDL2)
+  endif()
+
+  # Fetch content for SDL2_mixer
+  FetchContent_Declare(
+    sdl2_mixer
+    GIT_REPOSITORY https://github.com/libsdl-org/SDL_mixer.git
+    GIT_TAG release-2.8.0
+  )
+  FetchContent_GetProperties(sdl2_mixer)
+  set(SDL2MIXER_OPUS OFF CACHE BOOL "Disable Opus support" FORCE)
+
+  if(NOT sdl2_mixer_POPULATED)
+    FetchContent_Populate(sdl2_mixer)
+    add_subdirectory(${sdl2_mixer_SOURCE_DIR} ${sdl2_mixer_BINARY_DIR} EXCLUDE_FROM_ALL)
+  endif()
+  target_include_directories(QuestForTrueColor PRIVATE ${sdl2_mixer_SOURCE_DIR}/include)
+  target_link_libraries(QuestForTrueColor PRIVATE SDL2_mixer)
+  add_compile_definitions(_THREAD_SAFE)
 endif()
-target_include_directories(QuestForTrueColor PRIVATE ${sdl2_SOURCE_DIR}/include)
-target_link_libraries(QuestForTrueColor PRIVATE SDL2)
 
-if(NOT TARGET SDL2::SDL2)
-  add_library(SDL2::SDL2 ALIAS SDL2)
+# Download soundWaveEngine
+if (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/olcSoundWaveEngine.h")
+    Message("Downloading olcSoundWaveEngine.h")
+    file(DOWNLOAD "${OLC_SOUND_WAVE_ENGINE_URL}" "${CMAKE_CURRENT_SOURCE_DIR}/include/olcSoundWaveEngine.h")
 endif()
-
-# Fetch content for SDL2_mixer
-FetchContent_Declare(
-  sdl2_mixer
-  GIT_REPOSITORY https://github.com/libsdl-org/SDL_mixer.git
-  GIT_TAG release-2.8.0
-)
-FetchContent_GetProperties(sdl2_mixer)
-set(SDL2MIXER_OPUS OFF CACHE BOOL "Disable Opus support" FORCE)
-
-if(NOT sdl2_mixer_POPULATED)
-  FetchContent_Populate(sdl2_mixer)
-  add_subdirectory(${sdl2_mixer_SOURCE_DIR} ${sdl2_mixer_BINARY_DIR} EXCLUDE_FROM_ALL)
-endif()
-target_include_directories(QuestForTrueColor PRIVATE ${sdl2_mixer_SOURCE_DIR}/include)
-target_link_libraries(QuestForTrueColor PRIVATE SDL2_mixer)
-add_compile_definitions(_THREAD_SAFE)
