@@ -11,9 +11,6 @@
 #include <random>
 #include <stack>
 #include <iostream>
-#include <SDL.h>
-#include <SDL_mixer.h>
-#include <audio.h>
 #include <olcUTIL_Geometry2D.h>
 #include <olcPixelGameEngine.h>
 #include <LDtkLoader/Project.hpp>
@@ -44,7 +41,8 @@ class QuestForTrueColor : public olc::PixelGameEngine
 private:
     GameNode *gameNode;
     MenuNode *menuNode;
-
+    olc::sound::WaveEngine soundEngine;
+    Sound gameSound = Sound("assets/sfx/huperboloid.wav");
     bool paused = true;
     bool didSkipFrame = false;
 
@@ -112,6 +110,9 @@ public:
         gameNode->onCreated();
         menuNode->onCreated();
 
+        soundEngine.InitialiseAudio();
+        setSoundEngine(&soundEngine);
+
         return true;
     }
 
@@ -151,6 +152,8 @@ public:
         }
         else if (paused)
         {
+            soundEngine.StopAll();
+            gameSound.SetPlayed(false);
             if (upState.bPressed)
             {
                 menuNode->onUp();
@@ -174,13 +177,12 @@ public:
                 paused = false;
             }
 
-            StopMusic();
-
             menuNode->onUpdated(fElapsedTime);
         }
         else
         {
             auto *gameNode = getGameNode();
+            gameSound.Play(true, false);
 
             if (upState.bHeld)
                 gameNode->onUp();

@@ -202,7 +202,7 @@ public:
                 else
                 {
                     animations->PlayAnimation("idle", false);
-                    walkSound->Stop();
+                    walkSound->SetPlayed(false);
                 }
             }
             else

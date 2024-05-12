@@ -449,7 +449,7 @@ public:
         delete spritesProvider;
         delete deadSound;
         delete backgroundProvider;
-        ClearMusic();
+        // ClearMusic();
     }
 
     void setMiniGame(const std::string &game = "ShellGame")
@@ -632,21 +632,21 @@ public:
 
     void onUpdated(float fElapsedTime) override
     {
-        if (!IsPlayingMusic() && !didLoadMusic)
-        {
-            LoadMusic("assets/sfx/huperboloid.wav");
-            didLoadMusic = true;
-        }
+        // if (!IsPlayingMusic() && !didLoadMusic)
+        // {
+        //     // LoadMusic("assets/sfx/huperboloid.wav");
+        //     didLoadMusic = true;
+        // }
 
         if (isFullscreenDialog())
         {
             drawOverlayDialog(fElapsedTime);
-            StopMusic();
+            // StopMusic();
             return;
         }
 
-        if (didLoadMusic)
-            ResumeMusic();
+        // if (didLoadMusic)
+        //     ResumeMusic();
 
         // Drawing background image
         Image(backgroundProvider);
