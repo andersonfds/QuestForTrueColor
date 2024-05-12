@@ -2,7 +2,7 @@
 
 struct GameImageAssetProvider
 {
-    olc::Decal *decal;
+    olc::Decal *decal = nullptr;
 
     GameImageAssetProvider(std::string path)
     {
@@ -50,7 +50,7 @@ private:
     olc::vf2d size;
     std::string currentAnimation = "";
     float elapsedTime = 0;
-    AssetOptions *options;
+    AssetOptions *options = nullptr;
 
 public:
     AnimatedAssetProvider(olc::vf2d position, olc::vf2d initialOffset, olc::vf2d scale = {1.0f, 1.0f}, olc::vf2d size = {SPRITE_SIZE, SPRITE_SIZE}, olc::Pixel tint = olc::WHITE)
@@ -200,7 +200,7 @@ const olc::vi2d &MousePosition();
 
 #ifdef USE_PIXEL_GAME_ENGINE
 
-olc::PixelGameEngine *ctx;
+olc::PixelGameEngine *ctx = nullptr;
 
 void SetContext(olc::PixelGameEngine *pge)
 {

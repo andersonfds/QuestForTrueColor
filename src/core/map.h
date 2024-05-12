@@ -18,8 +18,8 @@ private:
     float distance = 0.0;
     std::vector<Node *> entities;
     bool enableUI = false;
-    olc::vf2d *uiCoords;
-    olc::Decal *background;
+    olc::vf2d *uiCoords = nullptr;
+    olc::Decal *background = nullptr;
     std::vector<std::string> dialogues;
     std::string fullscreenDialog;
     float dialogTime = 0.0f;

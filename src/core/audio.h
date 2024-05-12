@@ -1,6 +1,6 @@
 #pragma once
 
-olc::sound::WaveEngine *soundEngine;
+olc::sound::WaveEngine *soundEngine = nullptr;
 
 void setSoundEngine(olc::sound::WaveEngine *engine)
 {

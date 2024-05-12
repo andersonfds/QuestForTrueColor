@@ -3,8 +3,8 @@ class MenuNode : public CoreNode
 {
 public:
     float deltaTime = 0.0f;
-    GameImageAssetProvider *spritesProvider;
-    AssetOptions *options;
+    GameImageAssetProvider *spritesProvider = nullptr;
+    AssetOptions *options = nullptr;
     bool canContinue = false;
 
     std::vector<std::string> menuOptions = {"Continue", "New Game", "Exit"};

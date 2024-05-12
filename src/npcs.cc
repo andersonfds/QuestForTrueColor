@@ -5,7 +5,7 @@ using namespace olc::utils::geom2d;
 class CoreNPC : public EntityNode
 {
 protected:
-    AnimatedAssetProvider *animProvider;
+    AnimatedAssetProvider *animProvider = nullptr;
     bool isPlayingChat = false;
 
 public:

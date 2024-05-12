@@ -15,7 +15,7 @@ private:
     std::map<GameOption, std::string> options;
     olc::Pixel unselectedColor = olc::Pixel(255, 255, 255, 100);
     GameOption selectedOption = GameOption::NEW_GAME;
-    Layer *gameLayer;
+    Layer *gameLayer = nullptr;
 
 public:
     MainMenu(Layer *gameLayer)

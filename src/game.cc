@@ -39,8 +39,8 @@ MiniGame *CreateMiniGame(const std::string &name, GameNode *game)
 class QuestForTrueColor : public olc::PixelGameEngine
 {
 private:
-    GameNode *gameNode;
-    MenuNode *menuNode;
+    GameNode *gameNode = nullptr;
+    MenuNode *menuNode = nullptr;
     olc::sound::WaveEngine soundEngine;
     Sound gameSound = Sound("assets/sfx/huperboloid.wav");
     bool paused = true;

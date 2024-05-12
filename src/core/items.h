@@ -23,7 +23,7 @@ private:
     float particleDelta = 0.0f;
     int particleTimes = 0;
     olc::vf2d direction = {1, 0};
-    Sound *sfx;
+    Sound *sfx = nullptr;
 
 public:
     void OnCreate() override
@@ -189,7 +189,7 @@ public:
 
             float angle = ((rand() % 45) - 22.5f) * 3.14159f / 180.0f;
             olc::vf2d vel = RotateVector(direction, angle) * (float)(rand() % 100 + 50);
-            p.position = *position;
+            p.position = *position = nullptr;
             p.lifespan = 2.0f;
             p.velocity = vel;
         }
@@ -226,7 +226,7 @@ private:
     int slots;
     int selectedSlot = -1;
     std::vector<Item *> items;
-    Item *candidateItem;
+    Item *candidateItem = nullptr;
 
 public:
     void OnEntityDefined(const ldtk::Entity &entity) override
@@ -578,7 +578,7 @@ class TeleportPoint : public Item
 private:
     float delta = 0.0f;
     olc::vf2d direction;
-    AnimationController *portal;
+    AnimationController *portal = nullptr;
     bool enabled = false;
     std::string targetLevel;
 
@@ -638,10 +638,10 @@ class Bee : public Node
 {
 private:
     bool isMad = false;
-    AnimationController *flying;
-    olc::vf2d *position;
-    olc::vf2d *travelTo;
-    olc::vf2d *initialPosition;
+    AnimationController *flying = nullptr;
+    olc::vf2d *position = nullptr;
+    olc::vf2d *travelTo = nullptr;
+    olc::vf2d *initialPosition = nullptr;
     float speed = 100.0f;
     float delta = 0.0f;
     int direction = 0;
@@ -713,7 +713,7 @@ public:
 
         Map *map = GetLayer()->GetNode<Map>();
         auto frame = flying->GetFrame(fElapsedTime);
-        olc::vf2d pos = *position;
+        olc::vf2d pos = *position = nullptr;
 
         if (isMad)
         {
@@ -760,16 +760,16 @@ public:
             // Draw collider
             if (DEBUG)
             {
-                olc::vf2d pos = *position;
+                olc::vf2d pos = *position = nullptr;
                 camera->WorldToScreen(pos);
                 GetEngine()->DrawRectDecal(pos, {32.0f, 32.0f}, olc::WHITE);
 
-                auto initialPosScreen = *initialPosition;
+                auto initialPosScreen = *initialPosition = nullptr;
                 camera->WorldToScreen(initialPosScreen);
 
                 if (travelTo != nullptr)
                 {
-                    auto travelToScreen = *travelTo;
+                    auto travelToScreen = *travelTo = nullptr;
                     camera->WorldToScreen(travelToScreen);
 
                     GetEngine()->FillRectDecal(initialPosScreen, {5.0f, 5.0f}, olc::RED);
@@ -788,7 +788,7 @@ public:
 class Character : public Item
 {
 private:
-    AnimationController *controller;
+    AnimationController *controller = nullptr;
 
 protected:
     void SetAnimationController(AnimationController *controller)

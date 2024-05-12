@@ -3,7 +3,7 @@ class PlayerNode : public EntityNode
 {
 private:
     olc::vf2d checkpoint;
-    AnimatedAssetProvider *animations;
+    AnimatedAssetProvider *animations = nullptr;
     olc::vf2d velocity = {0, 0};
     bool isOnGround = false;
     bool lockRight = false;
@@ -19,10 +19,10 @@ private:
     bool canMove = true;
     float immortalityTime = 0.0f;
 
-    Sound *damageSound;
-    Sound *coinLostSound;
-    Sound *jumpSound;
-    Sound *walkSound;
+    Sound *damageSound = nullptr;
+    Sound *coinLostSound = nullptr;
+    Sound *jumpSound = nullptr;
+    Sound *walkSound = nullptr;
 
 public:
     PlayerNode(const ldtk::Entity &entity, GameNode *game) : EntityNode(entity, game)

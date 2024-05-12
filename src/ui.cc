@@ -2,8 +2,8 @@
 class UINode : public CoreNode
 {
 private:
-    AssetOptions *options;
-    AssetOptions *slotOptions;
+    AssetOptions *options = nullptr;
+    AssetOptions *slotOptions = nullptr;
     float coinDeltaTime = 0.0f;
     uint8_t previousCoins = 0;
 

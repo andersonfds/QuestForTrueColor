@@ -7,11 +7,11 @@ private:
     float deltaTime = 0.0f;
 
 protected:
-    AnimatedAssetProvider *assetProvider;
+    AnimatedAssetProvider *assetProvider = nullptr;
     bool didCollect = false;
     bool enableWiggling = true;
     bool autoCollect = false;
-    PlayerNode *player;
+    PlayerNode *player = nullptr;
     olc::utils::geom2d::rect<float> collider;
     std::string hintText = "Item";
     Dialog dialog;
@@ -248,7 +248,7 @@ private:
     const uint8_t PARTICLE_COUNT = 80;
     const uint8_t EMISSION_RATE = 40;
     const uint8_t EMISSION_PER_SETUP = 8;
-    Sound *spraySfx;
+    Sound *spraySfx = nullptr;
 
     uint8_t emitted = 0;
     float deltaLastEmission = 0.0f;
@@ -382,7 +382,7 @@ REGISTER_NODE_TYPE(BugSprayNode, "bug_spray")
 class CoinNode : public Collectable
 {
 private:
-    Sound *coinUpSfx;
+    Sound *coinUpSfx = nullptr;
 
 public:
     CoinNode(const ldtk::Entity &entity, GameNode *game) : Collectable(entity, game)
@@ -488,7 +488,7 @@ REGISTER_NODE_TYPE(PortalNode, "portal")
 class CheckPointNode : public Collectable
 {
 private:
-    Sound *checkpointActivatedSfx;
+    Sound *checkpointActivatedSfx = nullptr;
 
 public:
     CheckPointNode(const ldtk::Entity &entity, GameNode *game) : Collectable(entity, game)

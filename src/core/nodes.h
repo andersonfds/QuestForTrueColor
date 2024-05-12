@@ -394,22 +394,22 @@ class GameNode : public CoreNode
 private:
     std::string selectedLevel = "level_1";
     ldtk::Project project;
-    GameImageAssetProvider *backgroundProvider;
+    GameImageAssetProvider *backgroundProvider = nullptr;
     std::vector<olc::utils::geom2d::rect<float> *> colliders;
     std::vector<olc::utils::geom2d::rect<float> *> onScreenColliders;
     std::vector<Dialog> dialogs;
     std::map<std::string, bool> flags;
-    Sound *deadSound;
-    CoreNode *playerNode;
-    MiniGame *currentMiniGame;
+    Sound *deadSound = nullptr;
+    CoreNode *playerNode = nullptr;
+    MiniGame *currentMiniGame = nullptr;
     bool displayingMinigame = false;
     bool didLoadMusic = false;
 
 public:
     bool isGameOver = false;
     Camera camera;
-    GameImageAssetProvider *spritesProvider;
-    CoreNode *uiNode;
+    GameImageAssetProvider *spritesProvider = nullptr;
+    CoreNode *uiNode = nullptr;
 
     GameNode(CoreNode *uiNode) : CoreNode("Game", nullptr)
     {
@@ -877,8 +877,8 @@ class EntityNode : public CoreNode
 {
 protected:
     const ldtk::Entity &entity;
-    Camera *camera;
-    GameImageAssetProvider *spritesProvider;
+    Camera *camera = nullptr;
+    GameImageAssetProvider *spritesProvider = nullptr;
 
 public:
     EntityNode(const ldtk::Entity &entity, GameNode *game) : CoreNode(entity.getName(), game), entity(entity)
