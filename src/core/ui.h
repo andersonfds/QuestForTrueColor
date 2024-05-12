@@ -191,6 +191,11 @@ bool Pressed(olc::Key key);
 bool Pressed(int key);
 
 /**
+ * Whether a key is held.
+ */
+bool Held(olc::Key key);
+
+/**
  * @brief MousePosition
  * Get the mouse position.
  *

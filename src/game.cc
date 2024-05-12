@@ -14,6 +14,10 @@
 #include <olcUTIL_Geometry2D.h>
 #include <olcPixelGameEngine.h>
 #include <LDtkLoader/Project.hpp>
+
+olc::Key static const LEFT_KEY = olc::Key::LEFT;
+olc::Key static const RIGHT_KEY = olc::Key::RIGHT;
+
 #include "core/audio.h"
 #include "core/ui.h"
 #include "core/nodes.h"
@@ -235,8 +239,8 @@ public:
         {
             upState = GetKey(olc::Key::UP);
             downState = GetKey(olc::Key::DOWN);
-            leftState = GetKey(olc::Key::LEFT);
-            rightState = GetKey(olc::Key::RIGHT);
+            leftState = GetKey(LEFT_KEY);
+            rightState = GetKey(RIGHT_KEY);
             enterState = GetKey(olc::Key::SPACE);
         }
         escapeState = GetKey(olc::Key::ESCAPE);
