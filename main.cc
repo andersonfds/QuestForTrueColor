@@ -12,7 +12,7 @@ int main()
     QuestForTrueColor game;
     srand(time(NULL));
 
-    if (game.Construct(SCREEN_WIDTH, SCREEN_HEIGHT, 2, 2, false))
+    if (game.Construct(SCREEN_WIDTH, SCREEN_HEIGHT, 2, 2, true))
         game.Start();
 
     return 0;
