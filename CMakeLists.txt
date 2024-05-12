@@ -57,10 +57,10 @@ FetchContent_Declare(
 )
 
 FetchContent_MakeAvailable(ldtkloader)
+target_link_libraries(QuestForTrueColor PRIVATE LDtkLoader)
 
 target_include_directories(QuestForTrueColor PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_include_directories(QuestForTrueColor PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/core)
-target_link_libraries(QuestForTrueColor PRIVATE LDtkLoader)
 
 if (APPLE)
   # Fetch content for SDL2
@@ -105,3 +105,14 @@ if (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/olcSoundWaveEngine.h")
     Message("Downloading olcSoundWaveEngine.h")
     file(DOWNLOAD "${OLC_SOUND_WAVE_ENGINE_URL}" "${CMAKE_CURRENT_SOURCE_DIR}/include/olcSoundWaveEngine.h")
 endif()
+
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+  add_compile_options(-O3)  # Example of adding further optimizations
+  add_definitions(-DNDEBUG)  # Ensure assertions are disabled
+  message("Release build")
+endif()
+
+# Copy assets to build directory on build done
+add_custom_command(TARGET QuestForTrueColor POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CMAKE_SOURCE_DIR}/assets $<TARGET_FILE_DIR:QuestForTrueColor>/assets)
