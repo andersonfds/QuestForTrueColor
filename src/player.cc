@@ -189,6 +189,9 @@ public:
         computeCollisions();
         position += velocity * fElapsedTime;
 
+        if (lockLeft || lockRight)
+            velocity.x = 0;
+
         // Updating the animations
         if (canMove)
         {
@@ -205,6 +208,9 @@ public:
                     else
                     {
                         timeoutTillPlayWalkSound -= fElapsedTime;
+
+                        if (timeoutTillPlayWalkSound <= 0.25)
+                            velocity.x = 0;
                     }
                 }
                 else
@@ -225,7 +231,6 @@ public:
                 }
             }
         }
-        velocity.x = 0;
 
         // Rendering the player
         animations->Update(fElapsedTime);
