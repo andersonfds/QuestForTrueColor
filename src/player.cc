@@ -18,6 +18,7 @@ private:
     CoreNode *child = nullptr;
     bool canMove = true;
     float immortalityTime = 0.0f;
+    float timeoutTillPlayWalkSound = 0.0f;
 
     Sound *damageSound = nullptr;
     Sound *coinLostSound = nullptr;
@@ -196,7 +197,15 @@ public:
                 if (velocity.x != 0)
                 {
                     animations->PlayAnimation("walk", false);
-                    walkSound->Play(false, false);
+                    if (timeoutTillPlayWalkSound <= 0)
+                    {
+                        walkSound->Play(false, false);
+                        timeoutTillPlayWalkSound = 0.5f;
+                    }
+                    else
+                    {
+                        timeoutTillPlayWalkSound -= fElapsedTime;
+                    }
                 }
                 else
                 {
