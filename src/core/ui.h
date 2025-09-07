@@ -196,6 +196,11 @@ bool Pressed(int key);
 bool Held(olc::Key key);
 
 /**
+ * Whether a key is released.
+ */
+bool Released(olc::Key key);
+
+/**
  * @brief MousePosition
  * Get the mouse position.
  *
@@ -311,6 +316,11 @@ bool Pressed(int key)
 bool Held(olc::Key key)
 {
     return ctx->GetKey(key).bHeld;
+}
+
+bool Released(olc::Key key)
+{
+    return ctx->GetKey(key).bReleased;
 }
 
 const olc::vi2d &MousePosition()

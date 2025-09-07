@@ -189,7 +189,7 @@ public:
         computeCollisions();
         position += velocity * fElapsedTime;
 
-        if (lockLeft || lockRight || !Held(LEFT_KEY) && !Held(RIGHT_KEY))
+        if (lockLeft || lockRight || Released(LEFT_KEY) && Released(RIGHT_KEY))
             velocity.x = 0;
 
         // Updating the animations
